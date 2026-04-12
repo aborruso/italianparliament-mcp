@@ -1,5 +1,12 @@
 # LOG
 
+## 2026-04-12 (aggiornamento 2)
+
+- Nuovo tool `rank` [CAMERA]: classifica deputati per attività parlamentare in una sola chiamata.
+- 5 dimensioni: `aic-primo-firmatario`, `aic-cofirmatario`, `bills-primo-firmatario`, `bills-cofirmatario`, `speeches`.
+- Evita N batch da 1000 righe: GROUP BY lato SPARQL, risposta diretta top-N.
+- Fix trovato: prefisso `PREFIX rdfs:` causa errore silenzioso su endpoint Camera — usare URI completo `<http://www.w3.org/2000/01/rdf-schema#label>`.
+
 ## 2026-04-12 (aggiornamento)
 
 - Nuovo tool `senator-group-members` [SENATO]: membri attivi di un gruppo parlamentare del Senato.

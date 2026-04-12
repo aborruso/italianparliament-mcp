@@ -24,6 +24,7 @@ import { billSignatoriesTool } from "./tools/bill-signatories.js";
 import { amendmentsTool } from "./tools/amendments.js";
 import { documentsTool } from "./tools/documents.js";
 import { sparqlTool } from "./tools/sparql.js";
+import { rankTool } from "./tools/rank.js";
 import { formatRows, type Format } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
 import type { ToolResult } from "./tools/types.js";
@@ -681,6 +682,48 @@ const amendmentsList = defineCommand({
   },
 });
 
+const rankList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "Rank Camera deputies by parliamentary activity.",
+      rankTool.examples,
+    ),
+  },
+  args: {
+    "rank-by": {
+      type: "string",
+      description:
+        "aic-primo-firmatario | aic-cofirmatario | bills-primo-firmatario | bills-cofirmatario | speeches",
+      required: true,
+    },
+    legislature: { type: "string", description: "Legislature number" },
+    limit: { type: "string", default: "20" },
+    offset: { type: "string", default: "0" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const rankBy = args["rank-by"] as string;
+    const validRankBy = [
+      "aic-primo-firmatario",
+      "aic-cofirmatario",
+      "bills-primo-firmatario",
+      "bills-cofirmatario",
+      "speeches",
+    ];
+    if (!validRankBy.includes(rankBy)) {
+      throw new Error(`Invalid --rank-by. Allowed: ${validRankBy.join(", ")}`);
+    }
+    const result = await rankTool.execute({
+      rankBy: rankBy as Parameters<typeof rankTool.execute>[0]["rankBy"],
+      legislature: parseIntFlag(args.legislature as string, "legislature"),
+      limit: parseIntFlag(args.limit as string, "limit") ?? 20,
+      offset: Number(args.offset ?? 0),
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
 const sparqlQuery = defineCommand({
   meta: {
     name: "query",
@@ -842,6 +885,10 @@ const main = defineCommand({
     sparql: defineCommand({
       meta: { name: "sparql", description: "Free SPARQL SELECT query on Camera or Senato" },
       subCommands: { query: sparqlQuery },
+    }),
+    rank: defineCommand({
+      meta: { name: "rank", description: "Rank deputies by parliamentary activity (Camera)" },
+      subCommands: { list: rankList },
     }),
   },
 });

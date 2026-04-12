@@ -24,6 +24,7 @@ import { billSignatoriesTool } from "./tools/bill-signatories.js";
 import { amendmentsTool } from "./tools/amendments.js";
 import { documentsTool } from "./tools/documents.js";
 import { sparqlTool } from "./tools/sparql.js";
+import { rankTool } from "./tools/rank.js";
 import type { Tool, ToolResult } from "./tools/types.js";
 import { toJsonl } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
@@ -96,6 +97,7 @@ export function registerAll(server: McpServer): void {
     amendmentsTool,
     documentsTool,
     sparqlTool,
+    rankTool,
   ];
 
   for (const tool of allTools) {
