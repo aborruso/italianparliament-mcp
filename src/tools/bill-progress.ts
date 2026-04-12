@@ -31,6 +31,7 @@ const columns = [
   "legislature",
   "phase",
   "phase_number",
+  "html_url",
 ];
 
 export const billProgressTool: Tool<typeof inputSchema> = {
@@ -75,18 +76,26 @@ OFFSET ${input.offset}`;
 
     const results = await snQuery(query);
     const raw = flattenBindings(results);
-    const rows = raw.map((r) => ({
-      ddl_uri: r.s ?? "",
-      title: r.titolo ?? "",
-      status: r.statoDdl ?? "",
-      status_date: r.dataStatoDdl ?? "",
-      presentation_date: r.dataPresentazione ?? "",
-      initiative_description: r.descrIniziativa ?? "",
-      nature: r.natura ?? "",
-      legislature: r.legislatura ?? "",
-      phase: r.fase ?? "",
-      phase_number: r.numeroFase ?? "",
-    }));
+    const rows = raw.map((r) => {
+      const ddl_uri = r.s ?? "";
+      const idMatch = ddl_uri.match(/\/ddl\/(\d+)$/);
+      const html_url = idMatch
+        ? `https://www.senato.it/leggi-e-documenti/disegni-di-legge/scheda-ddl?tab=datiGenerali&did=${idMatch[1]}`
+        : "";
+      return {
+        ddl_uri,
+        title: r.titolo ?? "",
+        status: r.statoDdl ?? "",
+        status_date: r.dataStatoDdl ?? "",
+        presentation_date: r.dataPresentazione ?? "",
+        initiative_description: r.descrIniziativa ?? "",
+        nature: r.natura ?? "",
+        legislature: r.legislatura ?? "",
+        phase: r.fase ?? "",
+        phase_number: r.numeroFase ?? "",
+        html_url,
+      };
+    });
     return { rows, columns };
   },
 };

@@ -6,6 +6,12 @@ import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
   uri: z.string().url().describe("URI completo del senatore"),
+  legislature: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Numero legislatura (default: 19 corrente)"),
 });
 
 const columns = [
@@ -17,6 +23,7 @@ const columns = [
   "birth_date",
   "birth_city",
   "photo",
+  "html_url",
 ];
 
 export const senatorTool: Tool<typeof inputSchema> = {
@@ -50,6 +57,14 @@ LIMIT 1`;
       throw new Error(`Nessun senatore trovato per URI: ${input.uri}`);
     }
     const r = raw[0];
+    const idMatch = input.uri.match(/\/senatore\/(\d+)$/);
+    const senId = idMatch ? idMatch[1] : "";
+    const leg = input.legislature ?? 19;
+    const html_url = senId
+      ? leg === 19
+        ? `https://www.senato.it/composizione/senatori/elenco-alfabetico/scheda-attivita?did=${senId.padStart(8, "0")}`
+        : `https://www.senato.it/legislature/${leg}/composizione/senatori/elenco-alfabetico/scheda-attivita?did=${senId}`
+      : "";
     const rows = [
       {
         uri: input.uri,
@@ -60,6 +75,7 @@ LIMIT 1`;
         birth_date: r.birthDate ?? "",
         birth_city: r.birthCity ?? "",
         photo: r.photo ?? "",
+        html_url,
       },
     ];
     return { rows, columns };

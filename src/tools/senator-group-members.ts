@@ -29,6 +29,7 @@ const columns = [
   "senator_uri",
   "group_uri",
   "group_label",
+  "group_html_url",
   "start_date",
   "end_date",
   "legislature",
@@ -83,14 +84,22 @@ OFFSET ${input.offset}`;
 
     const results = await snQuery(query);
     const raw = flattenBindings(results);
-    const rows = raw.map((r) => ({
-      senator_uri: r.senator_uri ?? "",
-      group_uri: r.group ?? "",
-      group_label: r.group_label ?? "",
-      start_date: r.start_date ?? "",
-      end_date: r.end_date ?? "",
-      legislature: r.legislature ?? "",
-    }));
+    const rows = raw.map((r) => {
+      const group_uri = r.group ?? "";
+      const idMatch = group_uri.match(/\/gruppo\/(\d+)$/);
+      const group_html_url = idMatch
+        ? `https://www.senato.it/composizione/gruppi-parlamentari/riepilogo-della-composizione/composizione?did=${idMatch[1]}`
+        : "";
+      return {
+        senator_uri: r.senator_uri ?? "",
+        group_uri,
+        group_label: r.group_label ?? "",
+        group_html_url,
+        start_date: r.start_date ?? "",
+        end_date: r.end_date ?? "",
+        legislature: r.legislature ?? "",
+      };
+    });
     return { rows, columns };
   },
 };

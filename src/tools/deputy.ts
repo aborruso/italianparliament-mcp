@@ -25,6 +25,7 @@ const columns = [
   "legislature_uri",
   "photo_url",
   "profile_url",
+  "html_url",
   "modified",
 ];
 
@@ -70,6 +71,10 @@ LIMIT 1`;
       throw new Error(`Nessun deputato trovato per URI: ${uri}`);
     }
     const r = raw[0];
+    const match = uri.match(/\/d(\d+)_(\d+)$/);
+    const html_url = match
+      ? `https://www.camera.it/deputati/elenco/${match[2]}-${match[1]}`
+      : "";
     const rows = [
       {
         uri,
@@ -81,6 +86,7 @@ LIMIT 1`;
         legislature_uri: r.rif_leg ?? "",
         photo_url: r.depiction ?? "",
         profile_url: r.isReferencedBy ?? "",
+        html_url,
         modified: r.modified ?? "",
       },
     ];

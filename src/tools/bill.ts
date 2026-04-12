@@ -20,6 +20,7 @@ const columns = [
   "sponsor_uri",
   "legislature_uri",
   "url",
+  "html_url",
 ];
 
 export const billTool: Tool<typeof inputSchema> = {
@@ -55,6 +56,10 @@ LIMIT 1`;
       throw new Error(`Nessun atto trovato per URI: ${input.uri}`);
     }
     const r = raw[0];
+    const m = input.uri.match(/ac(\d+)_(\d+)$/);
+    const html_url = m
+      ? `https://www.camera.it/leg19/126?leg=${m[1]}&idDocumento=${m[2]}`
+      : "";
     const rows = [
       {
         uri: input.uri,
@@ -68,6 +73,7 @@ LIMIT 1`;
         sponsor_uri: r.primo_firmatario ?? "",
         legislature_uri: r.rif_leg ?? "",
         url: r.url ?? "",
+        html_url,
       },
     ];
     return { rows, columns };

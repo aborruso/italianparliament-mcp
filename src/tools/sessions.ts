@@ -15,7 +15,7 @@ const inputSchema = z.object({
   offset: z.number().int().nonnegative().default(0),
 });
 
-const columns = ["uri", "label", "date", "number", "legislature_uri"];
+const columns = ["uri", "label", "date", "number", "legislature_uri", "html_url"];
 
 export const sessionsTool: Tool<typeof inputSchema> = {
   name: "sessions",
@@ -52,7 +52,13 @@ OFFSET ${input.offset}`;
     const raw = flattenBindings(results);
     const rows = raw.map((r) => {
       const { s, rif_leg, ...rest } = r;
-      return { uri: s ?? "", legislature_uri: rif_leg ?? "", ...rest };
+      const date = r.date ?? "";
+      // date format: YYYYMMDD → slAnnoMese=YYYYMM&slGiorno=DD
+      const html_url =
+        date.length === 8
+          ? `https://www.camera.it/leg19/187?slAnnoMese=${date.slice(0, 6)}&slGiorno=${date.slice(6, 8)}`
+          : "";
+      return { uri: s ?? "", legislature_uri: rif_leg ?? "", ...rest, html_url };
     });
     return { rows, columns };
   },

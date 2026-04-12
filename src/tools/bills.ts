@@ -31,6 +31,7 @@ const columns = [
   "legislature_uri",
   "sponsor_uri",
   "url",
+  "html_url",
 ];
 
 function sparqlEscape(s: string): string {
@@ -82,7 +83,12 @@ OFFSET ${input.offset}`;
     const raw = flattenBindings(results);
     const rows = raw.map((r) => {
       const { s, rif_leg, ...rest } = r;
-      return { uri: s ?? "", legislature_uri: rif_leg ?? "", ...rest };
+      const uri = s ?? "";
+      const m = uri.match(/ac(\d+)_(\d+)$/);
+      const html_url = m
+        ? `https://www.camera.it/leg19/126?leg=${m[1]}&idDocumento=${m[2]}`
+        : "";
+      return { uri, legislature_uri: rif_leg ?? "", ...rest, html_url };
     });
     return { rows, columns };
   },

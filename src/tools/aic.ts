@@ -34,6 +34,7 @@ const columns = [
   "sponsor_uri",
   "legislature_uri",
   "url",
+  "html_url",
 ];
 
 export const aicTool: Tool<typeof inputSchema> = {
@@ -87,17 +88,25 @@ OFFSET ${input.offset}`;
 
     const results = await cdQuery(query);
     const raw = flattenBindings(results);
-    const rows = raw.map((r) => ({
-      uri: r.s ?? "",
-      label: r.label ?? "",
-      title: r.title ?? "",
-      type: r.type ?? "",
-      date: r.date ?? "",
-      identifier: r.identifier ?? "",
-      sponsor_uri: r.sponsor_uri ?? "",
-      legislature_uri: r.rif_leg ?? "",
-      url: r.url ?? "",
-    }));
+    const rows = raw.map((r) => {
+      const uri = r.s ?? "";
+      const m = uri.match(/aic(\d+)_(\d+)_(\d+)$/);
+      const html_url = m
+        ? `https://aic.camera.it/aic/scheda.html?core=aic&numero=${m[1]}/${m[2]}&ramo=CAMERA&leg=${m[3]}`
+        : "";
+      return {
+        uri,
+        label: r.label ?? "",
+        title: r.title ?? "",
+        type: r.type ?? "",
+        date: r.date ?? "",
+        identifier: r.identifier ?? "",
+        sponsor_uri: r.sponsor_uri ?? "",
+        legislature_uri: r.rif_leg ?? "",
+        url: r.url ?? "",
+        html_url,
+      };
+    });
     return { rows, columns };
   },
 };
