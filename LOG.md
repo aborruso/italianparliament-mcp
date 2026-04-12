@@ -1,6 +1,36 @@
 # LOG
 
+## 2026-04-12
+
+- Fase 6 batch 3: +4 tool Camera (`speeches`, `aic`, `vote-detail`, `group-members`). Totale tool: 17/24.
+- Fix `vote-detail`: la query R usava `ocd:voto` come proprietà ma non esiste — il valore del voto è in `dc:type`. Scoperto con query esplorativa sulle proprietà reali del triplo.
+- `speeches`: dati disponibili solo per legislatura 17, molti campi opzionali vuoti (limite dati upstream Camera).
+- README aggiornato con riferimento al repo upstream [`italyParlR`](https://github.com/paride92/italyParlR).
+- README riscritto in italiano per giornalisti parlamentari (tabella comandi, esempi pratici, note sui limiti dati).
+- Verifica completa dei 17 tool, 3 fix applicati:
+  - `groups`: acronimo ora estratto dalla label con regex (era campo vuoto nell'endpoint).
+  - `roles`: proprietà corretta `ocd:ruolo` invece di `dc:type` (VICEPRESIDENTE, SEGRETARIO, ecc. ora popolati).
+  - `sessions`: filtro `STRSTARTS` per escludere bollettini (`BF_*`), ora solo sedute formali con numero progressivo.
+  - `speeches`: riscritto completamente. `rif_leg`/`dc:date`/`rif_seduta` non esistono; la legislatura è nell'URI (`in19_`), filtro con `STRSTARTS`. Ora funziona per tutte le legislature (>1M interventi totali). Colonne: uri, label, deputy_uri, document_url, modified.
+  - `deputy/senator/bill show`: riscritti con query mirate invece di triple RDF grezze. Output ora con campi leggibili (first_name, last_name, gender, photo, ecc.). Deputy usa `foaf:firstName`/`foaf:surname`/`foaf:gender`.
+  - `governments`: riscritta query, ora interroga direttamente `ocd:governo` con `dc:date`. Ordinamento cronologico DESC (Meloni→Draghi→Conte II→...). Aggiunto campo `start_date`.
+- Fase 6 batch 4: +5 tool (`gov-members`, `committees`, `bill-progress`, `bill-signatories`, `amendments`). Totale tool: 22.
+  - `gov-members`: membri del governo con nome persona, ruolo (MINISTRO, SOTTOSEGRETARIO, ecc.), date, motivo termine. Cerca per nome.
+  - `committees`: 279 commissioni Senato (permanenti, speciali, d'inchiesta).
+  - `bill-progress`: iter DDL Senato con stato, date, iniziativa, natura. Dati freschi (DDL del 10 aprile 2026).
+  - `bill-signatories`: firmatari DDL Senato con primo firmatario/cofirmatari e link senatore.
+  - `amendments`: 53K emendamenti Senato leg 19, con link al testo.
+- `documents` Camera (`ocd:documento`): 0 istanze nell'endpoint. Nessun tipo documento alternativo trovato. Senato ha `osr:Documento` (48K), implementato.
+- `documents` Senato: atti del governo, atti UE, relazioni Corte dei Conti, risoluzioni commissioni. Dati freschi (9 aprile 2026).
+- `committees`: migliorato con filtro legislatura via SedutaCommissione. Con `--legislature 19` mostra 12 commissioni attive con conteggio sedute (Affari Costituzionali: 681 sedute). Senza filtro mostra catalogo storico (279).
+
 ## 2026-04-11
+
+- Commit root: 26 file (Fase 0-4).
+- Fase 6 batch 1: +4 tool Camera (`legislatures`, `groups`, `sessions`, `governments`). Query portate da `italyParlR` (clone in `tmp/`). Type check pulito. Smoke test CLI reali verdi su tutti e 4. Totale tool: 9/24.
+- Fase 6 batch 2: +4 tool dettaglio (`deputy`, `senator`, `bill` property/value; `roles` Camera con filtri deputy/group/legislature). Totale tool: 13/24.
+- Refactor obbligato: `makeHandler` in `src/index.ts` passato da `<I>` generico a `any` perché a 13 tool la generic instantiation combinata Zod × MCP SDK × helper mandava `tsc` in OOM (FATAL heap limit) anche con `--max-old-space-size=4096`. Con handler non generico il type check torna pulito.
+- Nota su `deputy`: rimossa la `z.refine()` sullo schema (produceva `ZodEffects` senza `.shape`, incompatibile con `registerTool` MCP). Validazione ora dentro `execute()`.
 
 - Repo creato. Fase 0 completata.
 - Struttura: `src/core/`, `src/tools/`, entrypoint previsti `src/cli.ts`, `src/index.ts`, `src/worker.ts`.

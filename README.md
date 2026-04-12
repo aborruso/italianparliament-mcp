@@ -1,19 +1,160 @@
 # italianparliament-mcp
 
-CLI and MCP server for querying Italian Parliament SPARQL endpoints — Camera dei Deputati (`dati.camera.it`) and Senato della Repubblica (`dati.senato.it`).
+Strumento per interrogare i dati aperti del Parlamento italiano — Camera dei Deputati (`dati.camera.it`) e Senato della Repubblica (`dati.senato.it`).
 
-Designed **agent-first**: every command is scriptable, non-interactive, with flag-based input, machine-readable output (CSV/JSONL), and actionable errors.
+Pensato per giornalisti, ricercatori e analisti parlamentari: ogni comando restituisce dati strutturati (CSV o JSONL) pronti per l'analisi.
 
-One codebase, three distributions:
+Usabile in tre modi:
 
-- **CLI** — `italianparliament <resource> <verb>` installable via npm
-- **MCP server (stdio)** — usable from Claude Desktop / Claude Code
-- **MCP server (Cloudflare Worker)** — remote HTTP MCP
+- **Da terminale** — `italianparliament <risorsa> <azione>` (installabile via npm)
+- **Da Claude** — come MCP server integrato in Claude Desktop o Claude Code
+- **Da remoto** — come MCP server HTTP su Cloudflare Worker (futuro)
 
-## Status
+## Cosa puoi fare
 
-Under active development. See `LOG.md` for daily progress and `tasks/todo.md` in the reference repo `italyParlR_cli` for the full plan.
+### Parlamentari
 
-## License
+| Comando | Cosa fa |
+|---------|---------|
+| `deputies list` | Lista deputati Camera, filtrabile per legislatura |
+| `senators list` | Lista senatori, filtrabile per legislatura |
+| `search find` | Cerca un parlamentare per nome in Camera, Senato o entrambi |
+| `deputy show` | Scheda di un deputato (nome, cognome, genere, foto, profilo Camera) |
+| `senator show` | Scheda di un senatore (nome, cognome, genere, data/luogo nascita, foto) |
+
+### Attivita legislativa — Camera
+
+| Comando | Cosa fa |
+|---------|---------|
+| `bills list` | Disegni di legge Camera, filtrabile per legislatura e tipo |
+| `bill show` | Scheda di un atto Camera (titolo, tipo, data, iniziativa, firmatario, stato) |
+| `aic list` | Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni) |
+| `votes list` | Votazioni Camera con contatori (favorevoli, contrari, astenuti) |
+| `vote-detail show` | Come ha votato ogni singolo deputato in una votazione, con gruppo |
+| `speeches list` | Interventi in aula, filtrabile per legislatura e deputato |
+
+### Attivita legislativa — Senato
+
+| Comando | Cosa fa |
+|---------|---------|
+| `bill-progress list` | Iter dei DDL al Senato: stato, date, iniziativa, natura |
+| `bill-signatories show` | Firmatari di un DDL: primo firmatario e cofirmatari |
+| `amendments list` | Emendamenti al Senato con link al testo |
+| `documents list` | Documenti parlamentari: atti del governo, atti UE, relazioni Corte dei Conti |
+
+### Organizzazione parlamentare
+
+| Comando | Cosa fa |
+|---------|---------|
+| `groups list` | Gruppi parlamentari Camera con acronimo (FDI, PD-IDP, M5S...) |
+| `group-members list` | Composizione di un gruppo: chi ne fa parte, da quando |
+| `roles list` | Incarichi parlamentari con ruolo (presidente, vicepresidente, segretario...) |
+| `sessions list` | Sedute della Camera con numero progressivo |
+| `committees list` | Commissioni Senato; con filtro legislatura mostra solo quelle attive e il numero di sedute |
+
+### Contesto istituzionale
+
+| Comando | Cosa fa |
+|---------|---------|
+| `legislatures list` | Tutte le legislature dal 1848 a oggi |
+| `governments list` | Tutti i governi italiani, dal piu recente (con data) |
+| `gov-members list` | Membri del governo: ministri, sottosegretari, con ruolo e date. Cerca per nome |
+
+## Esempi pratici
+
+Quanti deputati ha la XIX legislatura?
+
+```
+italianparliament deputies list --legislature 19 --limit 1000 --format csv | wc -l
+```
+
+Chi sono i membri del governo Meloni?
+
+```
+italianparliament gov-members list --legislature 19
+```
+
+Meloni ha avuto altri incarichi di governo in passato?
+
+```
+italianparliament gov-members list --name meloni
+```
+
+Quali gruppi parlamentari ci sono alla Camera e con quale acronimo?
+
+```
+italianparliament groups list --legislature 19
+```
+
+Chi fa parte di Fratelli d'Italia?
+
+```
+italianparliament group-members list --legislature 19 --group-uri http://dati.camera.it/ocd/gruppoParlamentare.rdf/gr4133
+```
+
+Come hanno votato i singoli deputati su una specifica votazione?
+
+```
+italianparliament vote-detail show --vote-uri http://dati.camera.it/ocd/votazione.rdf/vs19_047_005 --format jsonl
+```
+
+Quante interrogazioni ha presentato un deputato?
+
+```
+italianparliament aic list --deputy-uri http://dati.camera.it/ocd/deputato.rdf/d308001_19
+```
+
+Quali commissioni del Senato sono attive nella XIX legislatura e quante sedute hanno fatto?
+
+```
+italianparliament committees list --legislature 19
+```
+
+A che punto e un DDL al Senato?
+
+```
+italianparliament bill-progress list --legislature 19 --limit 10
+```
+
+Chi ha firmato un DDL al Senato?
+
+```
+italianparliament bill-signatories show --ddl-uri http://dati.senato.it/ddl/25597
+```
+
+Quali atti del governo sono al vaglio del Senato?
+
+```
+italianparliament documents list --legislature 19 --type "Atto del Governo"
+```
+
+Quali interventi in aula ci sono stati nella XIX legislatura?
+
+```
+italianparliament speeches list --legislature 19 --limit 20
+```
+
+Cerca "schlein" in entrambe le camere:
+
+```
+italianparliament search find --name schlein
+```
+
+## Note sui dati
+
+I dati provengono dagli endpoint SPARQL ufficiali di Camera e Senato. Alcune limitazioni note:
+
+- **Gruppi** (`groups`): l'acronimo viene estratto dalla label (non ha campo dedicato nell'endpoint). Funziona per tutti i gruppi della XIX legislatura.
+- **Documenti Camera**: l'endpoint Camera non espone documenti parlamentari via SPARQL. Il tool `documents` usa i dati del Senato.
+
+## Riferimento
+
+Questo progetto e un porting in TypeScript ispirato a [italyParlR](https://github.com/paride92/italyParlR), un pacchetto R per interrogare i dati aperti del Parlamento italiano via SPARQL. Le query SPARQL e la conoscenza degli endpoint derivano da quel pacchetto.
+
+## Stato
+
+23 tool implementati. Vedi `LOG.md` per il diario di avanzamento.
+
+## Licenza
 
 MIT

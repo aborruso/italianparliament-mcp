@@ -87,24 +87,24 @@ Ogni tool è un file in `src/tools/<nome>.ts` che esporta schema Zod input + des
 
 19 comandi dalla CLI R da portare, mantenendo nomi e semantica argomenti per continuità. Ogni comando = un file in `src/tools/` con schema Zod + execute, più subcommand in `src/cli.ts`, più registrazione in `src/index.ts`.
 
-- [ ] `groups` — gruppi parlamentari Camera
-- [ ] `sessions` — sedute Camera con filtro date
-- [ ] `governments` — governi
-- [ ] `legislatures` — elenco legislature
-- [ ] `senator` — dettaglio singolo senatore (per URI o nome)
-- [ ] `deputy` — dettaglio singolo deputato con `--info bio|group|bills`
-- [ ] `bill` — dettaglio singolo atto (tutte le proprietà RDF)
-- [ ] `roles` — incarichi parlamentari
-- [ ] `speeches` — interventi in aula
-- [ ] `aic` — atti di indirizzo e controllo
-- [ ] `vote-detail` — voto individuale per ogni deputato in una votazione
-- [ ] `group-members` — membri di un gruppo parlamentare
-- [ ] `committees` — commissioni Senato con ruoli
-- [ ] `bill-progress` — iter legislativo DDL Senato
-- [ ] `bill-signatories` — firmatari DDL Senato
-- [ ] `amendments` — emendamenti Senato
-- [ ] `documents` — documenti parlamentari Camera
-- [ ] `gov-members` — membri del governo con ricerca per nome
+- [x] `groups` — gruppi parlamentari Camera
+- [x] `sessions` — sedute Camera con filtro date
+- [x] `governments` — governi
+- [x] `legislatures` — elenco legislature
+- [x] `senator` — dettaglio singolo senatore (property/value)
+- [x] `deputy` — dettaglio singolo deputato (property/value, --uri o --id+--legislature)
+- [x] `bill` — dettaglio singolo atto Camera (property/value)
+- [x] `roles` — incarichi parlamentari Camera (filtri deputy/group/legislature)
+- [x] `speeches` — interventi in aula
+- [x] `aic` — atti di indirizzo e controllo
+- [x] `vote-detail` — voto individuale per ogni deputato in una votazione
+- [x] `group-members` — membri di un gruppo parlamentare
+- [x] `committees` — commissioni Senato
+- [x] `bill-progress` — iter legislativo DDL Senato
+- [x] `bill-signatories` — firmatari DDL Senato
+- [x] `amendments` — emendamenti Senato
+- [x] `documents` — Camera ha 0 istanze; implementato da Senato `osr:Documento` (48K)
+- [x] `gov-members` — membri del governo con ricerca per nome
 
 Nota: nella versione R alcuni endpoint Camera risultano vuoti (`roles`, `speeches` cd, `vote-detail`) per limiti dei dati; il bug upstream `bill-signatories` di `italyParlR` qui non si applica, riscriviamo la query da zero.
 
@@ -126,8 +126,8 @@ Nota: nella versione R alcuni endpoint Camera risultano vuoti (`roles`, `speeche
 
 ## Metriche correnti
 
-- File sorgente: `src/core/` (7 file), `src/tools/` (7 file), `src/cli.ts`, `src/index.ts`
-- Tool implementati: **5 su 24** (21%)
+- File sorgente: `src/core/` (7 file), `src/tools/` (16 file), `src/cli.ts`, `src/index.ts`
+- Tool implementati: **23** (tutti completati)
 - Test: **10/10** vitest verdi
 - Type check: pulito
 - Smoke test reali verdi su entrambi gli endpoint + CLI + MCP stdio
