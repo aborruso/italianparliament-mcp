@@ -1,5 +1,12 @@
 # LOG
 
+## 2026-04-12 (aggiornamento 3)
+
+- Nuovo tool `sindacato-ispettivo` [SENATO]: equivalente Senato degli AIC Camera (interrogazioni, interpellanze, mozioni, risoluzioni).
+- Filtrabile per legislatura, senatore URI, tipo atto.
+- Fix: `BIND` non supportato su Virtuoso Senato → sostituito con `FILTER(?senatore_uri = <URI>)`.
+- Fix: legislatura come triple pattern diretto (`?s osr:legislatura 19`) non OPTIONAL+FILTER.
+
 ## 2026-04-12 (aggiornamento 2)
 
 - Nuovo tool `rank` [CAMERA]: classifica deputati per attività parlamentare in una sola chiamata.

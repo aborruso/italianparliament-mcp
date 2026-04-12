@@ -25,6 +25,7 @@ import { amendmentsTool } from "./tools/amendments.js";
 import { documentsTool } from "./tools/documents.js";
 import { sparqlTool } from "./tools/sparql.js";
 import { rankTool } from "./tools/rank.js";
+import { sindacatoIspettivoTool } from "./tools/sindacato-ispettivo.js";
 import { formatRows, type Format } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
 import type { ToolResult } from "./tools/types.js";
@@ -724,6 +725,34 @@ const rankList = defineCommand({
   },
 });
 
+const sindacatoIspettivoList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "List Senato sindacato ispettivo acts (interrogazioni, interpellanze, mozioni).",
+      sindacatoIspettivoTool.examples,
+    ),
+  },
+  args: {
+    legislature: { type: "string", description: "Legislature number" },
+    "senator-uri": { type: "string", description: "Full URI of a senator" },
+    tipo: { type: "string", description: "Filter by act type (case-insensitive)" },
+    limit: { type: "string", default: "100" },
+    offset: { type: "string", default: "0" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await sindacatoIspettivoTool.execute({
+      legislature: parseIntFlag(args.legislature as string, "legislature"),
+      senatorUri: (args["senator-uri"] as string) || undefined,
+      tipo: (args.tipo as string) || undefined,
+      limit: parseIntFlag(args.limit as string, "limit") ?? 100,
+      offset: Number(args.offset ?? 0),
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
 const sparqlQuery = defineCommand({
   meta: {
     name: "query",
@@ -889,6 +918,10 @@ const main = defineCommand({
     rank: defineCommand({
       meta: { name: "rank", description: "Rank deputies by parliamentary activity (Camera)" },
       subCommands: { list: rankList },
+    }),
+    "sindacato-ispettivo": defineCommand({
+      meta: { name: "sindacato-ispettivo", description: "Senato sindacato ispettivo acts (interrogazioni, interpellanze, mozioni)" },
+      subCommands: { list: sindacatoIspettivoList },
     }),
   },
 });
