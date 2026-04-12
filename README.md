@@ -26,11 +26,11 @@ Usabile in tre modi:
 
 | Comando | Cosa fa |
 |---------|---------|
-| `bills list` | Disegni di legge Camera, filtrabile per legislatura e tipo |
+| `bills list` | Disegni di legge Camera, filtrabile per legislatura, tipo, data (`--date-from`/`--date-to`) |
 | `bill show` | Scheda di un atto Camera (titolo, tipo, data, iniziativa, firmatario, stato) |
-| `aic list` | Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni) |
-| `votes list` | Votazioni Camera con contatori (favorevoli, contrari, astenuti) |
-| `vote-detail show` | Come ha votato ogni singolo deputato in una votazione, con gruppo |
+| `aic list` | Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni), filtrabile per data |
+| `votes list` | Votazioni Camera con contatori (favorevoli, contrari, astenuti), filtrabile per data |
+| `vote-detail show` | Come ha votato ogni singolo deputato in una votazione, con nome e gruppo |
 | `speeches list` | Interventi in aula, filtrabile per legislatura e deputato |
 
 ### Attivita legislativa — Senato
@@ -41,6 +41,7 @@ Usabile in tre modi:
 | `bill-signatories show` | Firmatari di un DDL: primo firmatario e cofirmatari |
 | `amendments list` | Emendamenti al Senato con link al testo |
 | `documents list` | Documenti parlamentari: atti del governo, atti UE, relazioni Corte dei Conti |
+| `sindacato-ispettivo list` | Atti di sindacato ispettivo Senato (interrogazioni, interpellanze, mozioni), filtrabile per data |
 
 ### Organizzazione parlamentare
 
@@ -98,6 +99,24 @@ Come hanno votato i singoli deputati su una specifica votazione?
 italianparliament vote-detail show --vote-uri http://dati.camera.it/ocd/votazione.rdf/vs19_047_005 --format jsonl
 ```
 
+Quali votazioni ci sono state questa settimana?
+
+```
+italianparliament votes list --legislature 19 --date-from 2026-04-07 --date-to 2026-04-12
+```
+
+Quali interrogazioni sono state presentate questo mese?
+
+```
+italianparliament aic list --legislature 19 --date-from 2026-04-01
+```
+
+Quali interrogazioni al Senato questa settimana?
+
+```
+italianparliament sindacato-ispettivo list --legislature 19 --date-from 2026-04-07
+```
+
 Quante interrogazioni ha presentato un deputato?
 
 ```
@@ -153,7 +172,7 @@ Questo progetto e un porting in TypeScript ispirato a [italyParlR](https://githu
 
 ## Stato
 
-23 tool implementati. Vedi `LOG.md` per il diario di avanzamento.
+24 tool implementati. Vedi `LOG.md` per il diario di avanzamento.
 
 ## Licenza
 
