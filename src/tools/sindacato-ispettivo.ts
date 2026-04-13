@@ -71,22 +71,19 @@ export const sindacatoIspettivoTool: Tool<typeof inputSchema> = {
       required.push(`?s osr:legislatura ${input.legislature} .`);
     }
     if (input.tipo) {
-      filters.push(`FILTER(CONTAINS(LCASE(?tipo), LCASE("${input.tipo}")))`);
+      filters.push(`FILTER(CONTAINS(LCASE(?tipo_), LCASE("${input.tipo}")))`);
     }
     if (input.dateFrom) {
-      filters.push(`FILTER(?data >= "${input.dateFrom}"^^xsd:date)`);
+      filters.push(`FILTER(?data_ >= "${input.dateFrom}"^^xsd:date)`);
     }
     if (input.dateTo) {
-      filters.push(`FILTER(?data <= "${input.dateTo}"^^xsd:date)`);
+      filters.push(`FILTER(?data_ <= "${input.dateTo}"^^xsd:date)`);
     }
 
-    const senatorPattern = input.senatorUri
-      ? `?s osr:iniziativa ?iniz .
-  ?iniz osr:senatore ?senatore_uri ; osr:presentatore ?presentatore .
-  FILTER(?senatore_uri = <${input.senatorUri}>)`
-      : ``;
-
-    const query = `${OSR_PREFIXES}
+    // When filtering by senator, use direct join (returns only that senator's acts)
+    // Otherwise, use GROUP BY + MIN to get the first signer without duplicating rows
+    if (input.senatorUri) {
+      const query = `${OSR_PREFIXES}
 SELECT DISTINCT ?s ?label ?tipo ?numero ?data ?legislatura ?senatore_uri ?presentatore ?esito ?url
 WHERE {
   ?s a osr:SindacatoIspettivo .
@@ -98,9 +95,54 @@ WHERE {
   OPTIONAL { ?s osr:legislatura ?legislatura }
   OPTIONAL { ?s osr:esito ?esito }
   OPTIONAL { ?s osr:URLTesto ?url }
-  ${senatorPattern}
+  ?s osr:iniziativa ?iniz .
+  ?iniz osr:senatore ?senatore_uri ; osr:presentatore ?presentatore .
+  FILTER(?senatore_uri = <${input.senatorUri}>)
+  ${filters.map((f) => f.replace(/\?tipo_/g, "?tipo").replace(/\?data_/g, "?data")).join("\n  ")}
+}
+ORDER BY DESC(?data)
+LIMIT ${input.limit}
+OFFSET ${input.offset}`;
+
+      const results = await snQuery(query);
+      const raw = flattenBindings(results);
+      return {
+        rows: raw.map((r) => ({
+          uri: r.s ?? "",
+          label: r.label ?? "",
+          tipo: r.tipo ?? "",
+          numero: r.numero ?? "",
+          data: r.data ?? "",
+          legislatura: r.legislatura ?? "",
+          senatore_uri: r.senatore_uri ?? "",
+          presentatore: (r.presentatore ?? "").replace(/^Sen\.\s*/i, ""),
+          esito: r.esito ?? "",
+          url: r.url ?? "",
+        })),
+        columns,
+      };
+    }
+
+    // No senator filter: GROUP BY + MIN to get first signer without duplicates
+    const query = `${OSR_PREFIXES}
+SELECT ?s (MIN(?label_) AS ?label) (MIN(?tipo_) AS ?tipo) (MIN(?numero_) AS ?numero)
+       (MIN(?data_) AS ?data) (MIN(?legislatura_) AS ?legislatura)
+       (MIN(?p) AS ?presentatore) (MIN(?sen) AS ?senatore_uri)
+       (MIN(?esito_) AS ?esito) (MIN(?url_) AS ?url)
+WHERE {
+  ?s a osr:SindacatoIspettivo .
+  ${required.join("\n  ")}
+  OPTIONAL { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label_ }
+  OPTIONAL { ?s osr:tipo ?tipo_ }
+  OPTIONAL { ?s osr:numero ?numero_ }
+  OPTIONAL { ?s osr:dataPresentazione ?data_ }
+  OPTIONAL { ?s osr:legislatura ?legislatura_ }
+  OPTIONAL { ?s osr:esito ?esito_ }
+  OPTIONAL { ?s osr:URLTesto ?url_ }
+  OPTIONAL { ?s osr:iniziativa ?iniz . ?iniz osr:presentatore ?p . ?iniz osr:senatore ?sen . }
   ${filters.join("\n  ")}
 }
+GROUP BY ?s
 ORDER BY DESC(?data)
 LIMIT ${input.limit}
 OFFSET ${input.offset}`;
