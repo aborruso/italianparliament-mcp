@@ -11,6 +11,10 @@ const inputSchema = z.object({
     .positive()
     .optional()
     .describe("Numero legislatura Camera (es. 19)"),
+  region: z
+    .string()
+    .optional()
+    .describe("Filtra per circoscrizione/regione (match case-insensitive, es. 'sicilia', 'lombardia', 'estero')"),
   limit: z.number().int().positive().max(1000).default(100),
   offset: z.number().int().nonnegative().default(0),
 });
@@ -37,10 +41,11 @@ const columns = [
 export const deputiesTool: Tool<typeof inputSchema> = {
   name: "deputies",
   description:
-    "[CAMERA] Lista deputati della Camera dei Deputati. Filtrabile per legislatura. Restituisce nome, cognome, genere, foto, profilo, mandato, elezione.",
+    "[CAMERA] Lista deputati della Camera dei Deputati. Filtrabile per legislatura e circoscrizione/regione. Restituisce nome, cognome, genere, foto, profilo, mandato, elezione.",
   inputSchema,
   examples: [
     "italianparliament deputies list --legislature 19 --limit 50",
+    "italianparliament deputies list --legislature 19 --region sicilia --limit 50",
     "italianparliament deputies list --limit 200 --offset 100",
     "italianparliament deputies list --format jsonl",
   ],
@@ -77,6 +82,7 @@ WHERE {
     }
   }
   ${legFilter}
+  ${input.region ? `FILTER(CONTAINS(LCASE(STR(?election_label)), LCASE("${input.region.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")))` : ""}
 }
 LIMIT ${input.limit}
 OFFSET ${input.offset}`;

@@ -70,6 +70,10 @@ const deputiesList = defineCommand({
       type: "string",
       description: "Legislature number (e.g. 19)",
     },
+    region: {
+      type: "string",
+      description: "Filter by constituency/region (case-insensitive, e.g. sicilia)",
+    },
     limit: {
       type: "string",
       description: "Max rows to return (default 100, max 1000)",
@@ -89,6 +93,7 @@ const deputiesList = defineCommand({
   async run({ args }) {
     const result = await deputiesTool.execute({
       legislature: parseIntFlag(args.legislature as string, "legislature"),
+      region: (args.region as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
       offset: Number(args.offset ?? 0),
     });
