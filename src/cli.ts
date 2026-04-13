@@ -825,8 +825,9 @@ const committeeMembersList = defineCommand({
     ),
   },
   args: {
-    "committee-uri": { type: "string", description: "Full URI of a Senato committee" },
-    "senator-uri": { type: "string", description: "Full URI of a senator (returns all committees)" },
+    chamber: { type: "string", default: "both", description: "camera, senato, or both" },
+    "committee-uri": { type: "string", description: "Full URI of a committee (Camera organo or Senato commissione)" },
+    "member-uri": { type: "string", description: "Full URI of a parliamentarian (returns all committees)" },
     legislature: { type: "string", description: "Legislature number" },
     "active-only": { type: "string", default: "true", description: "Only active members: true or false" },
     limit: { type: "string", default: "200" },
@@ -834,9 +835,14 @@ const committeeMembersList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
+    const chamber = (args.chamber as string) || "both";
+    if (!["camera", "senato", "both"].includes(chamber)) {
+      throw new Error(`Invalid --chamber "${chamber}". Expected: camera, senato, both.`);
+    }
     const result = await committeeMembersTool.execute({
+      chamber: chamber as "camera" | "senato" | "both",
       committeeUri: (args["committee-uri"] as string) || undefined,
-      senatorUri: (args["senator-uri"] as string) || undefined,
+      memberUri: (args["member-uri"] as string) || undefined,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       activeOnly: args["active-only"] !== "false",
       limit: parseIntFlag(args.limit as string, "limit") ?? 200,
