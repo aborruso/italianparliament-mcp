@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { cdQuery, snQuery, SparqlError } from "../core/client.js";
+import { cdQuery, snQuery } from "../core/client.js";
 import { flattenBindings } from "../core/flatten.js";
 import type { Tool } from "./types.js";
 

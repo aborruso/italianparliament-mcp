@@ -53,7 +53,7 @@ const columns = [
   "legislature",
 ];
 
-interface Row {
+type Row = {
   chamber: string;
   member_uri: string;
   member_name: string;
@@ -63,7 +63,7 @@ interface Row {
   start_date: string;
   end_date: string;
   legislature: string;
-}
+};
 
 async function queryCamera(input: z.infer<typeof inputSchema>): Promise<Row[]> {
   const filters: string[] = [];

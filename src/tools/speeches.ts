@@ -92,7 +92,7 @@ WHERE {
 }`;
     const results = await cdQuery(countQuery);
     const raw = flattenBindings(results);
-    const count = Number(raw[0]?.n ?? 0);
+    const count = String(Number(raw[0]?.n ?? 0));
     return { rows: [{ count }], columns: ["count"] };
   }
 
@@ -143,7 +143,7 @@ WHERE {
 }`;
     const results = await snQuery(countQuery);
     const raw = flattenBindings(results);
-    const count = Number(raw[0]?.n ?? 0);
+    const count = String(Number(raw[0]?.n ?? 0));
     return { rows: [{ count }], columns: ["count"] };
   }
 

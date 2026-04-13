@@ -81,7 +81,7 @@ describe("Camera tools", () => {
   }, 30000);
 
   it("speeches: returns speeches for legislature 19", async () => {
-    const result = await speechesTool.execute({ legislature: 19, limit: 3, offset: 0 });
+    const result = await speechesTool.execute({ legislature: 19, limit: 3, offset: 0, chamber: "camera", countOnly: false });
     expect(result.rows.length).toBe(3);
     expect(result.rows[0]).toHaveProperty("deputy_uri");
     expect(result.rows[0]).toHaveProperty("document_url");
