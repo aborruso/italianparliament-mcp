@@ -26,6 +26,7 @@ import { documentsTool } from "./tools/documents.js";
 import { sparqlTool } from "./tools/sparql.js";
 import { rankTool } from "./tools/rank.js";
 import { sindacatoIspettivoTool } from "./tools/sindacato-ispettivo.js";
+import { committeeMembersTool } from "./tools/committee-members.js";
 import { formatRows, type Format } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
 import type { ToolResult } from "./tools/types.js";
@@ -815,6 +816,36 @@ const sindacatoIspettivoList = defineCommand({
   },
 });
 
+const committeeMembersList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "List Senato committee members with roles.",
+      committeeMembersTool.examples,
+    ),
+  },
+  args: {
+    "committee-uri": { type: "string", description: "Full URI of a Senato committee" },
+    "senator-uri": { type: "string", description: "Full URI of a senator (returns all committees)" },
+    legislature: { type: "string", description: "Legislature number" },
+    "active-only": { type: "string", default: "true", description: "Only active members: true or false" },
+    limit: { type: "string", default: "200" },
+    offset: { type: "string", default: "0" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await committeeMembersTool.execute({
+      committeeUri: (args["committee-uri"] as string) || undefined,
+      senatorUri: (args["senator-uri"] as string) || undefined,
+      legislature: parseIntFlag(args.legislature as string, "legislature"),
+      activeOnly: args["active-only"] !== "false",
+      limit: parseIntFlag(args.limit as string, "limit") ?? 200,
+      offset: Number(args.offset ?? 0),
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
 const sparqlQuery = defineCommand({
   meta: {
     name: "query",
@@ -984,6 +1015,10 @@ const main = defineCommand({
     "sindacato-ispettivo": defineCommand({
       meta: { name: "sindacato-ispettivo", description: "Senato sindacato ispettivo acts (interrogazioni, interpellanze, mozioni)" },
       subCommands: { list: sindacatoIspettivoList },
+    }),
+    "committee-members": defineCommand({
+      meta: { name: "committee-members", description: "Senato committee members with roles" },
+      subCommands: { list: committeeMembersList },
     }),
   },
 });

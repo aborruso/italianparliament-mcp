@@ -3,6 +3,7 @@
 ## 2026-04-13
 
 - Gap analysis giornalista vs MCP: 33 user stories testate con tool reali. 13 OK, 14 PARZIALI, 6 KO. Documenti in `docs/gap-analysis-2026-04-13/`.
+- Nuovo tool `committee-members` [SENATO]: composizione commissioni con ruoli (Presidente, Vicepresidente, Segretario, Membro). Usa `osr:Afferenza` + `osr:afferisce`. Filtrabile per commissione, senatore, legislatura, activeOnly. GROUP BY + MIN su titoloBreve per dedup storico denominazioni. Totale tool: 25.
 - Fix `sindacato-ispettivo`: campo `presentatore` e `senatore_uri` ora sempre popolati (anche senza filtro senatore). Riscrittura query con `GROUP BY` + `MIN()` per evitare duplicati da join multi-firmatario. Subquery non supportata da Virtuoso Senato, usato MIN su tutti i campi.
 - Sprint 1 (6 quick wins):
   - `keyword` su `bills`, `bill-progress`, `votes`: ricerca full-text nei titoli DDL e votazioni. Cerca in title+label (OR).
