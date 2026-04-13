@@ -43,6 +43,7 @@ const columns = [
   "identifier",
   "sponsor_uri",
   "legislature_uri",
+  "description",
   "url",
   "html_url",
 ];
@@ -50,7 +51,7 @@ const columns = [
 export const aicTool: Tool<typeof inputSchema> = {
   name: "aic",
   description:
-    "[CAMERA] Atti di indirizzo e controllo: interrogazioni (orali, scritte, in commissione), interpellanze, mozioni. Filtrabile per legislatura, deputato (primo firmatario o cofirmatario).",
+    "[CAMERA] Atti di indirizzo e controllo: interrogazioni (orali, scritte, in commissione), interpellanze, mozioni. Include il testo/oggetto dell'atto nel campo description. Filtrabile per legislatura, deputato (primo firmatario o cofirmatario).",
   inputSchema,
   examples: [
     "italianparliament aic list --legislature 19 --limit 10",
@@ -87,7 +88,7 @@ export const aicTool: Tool<typeof inputSchema> = {
       : "";
 
     const query = `${OCD_PREFIXES}
-SELECT DISTINCT ?s ?label ?title ?type ?date ?identifier ?sponsor_uri ?rif_leg ?url
+SELECT DISTINCT ?s ?label ?title ?type ?date ?identifier ?sponsor_uri ?rif_leg ?description ?url
 WHERE {
   ?s a ocd:aic .
   ?s rdfs:label ?label .
@@ -97,6 +98,7 @@ WHERE {
   OPTIONAL { ?s dc:date ?date }
   OPTIONAL { ?s dc:identifier ?identifier }
   OPTIONAL { ?s ocd:rif_leg ?rif_leg }
+  OPTIONAL { ?s dc:description ?description }
   OPTIONAL { ?s dcterms:isReferencedBy ?url }
   ${legFilter}
   ${dateFromFilter}
@@ -123,6 +125,7 @@ OFFSET ${input.offset}`;
         identifier: r.identifier ?? "",
         sponsor_uri: r.sponsor_uri ?? "",
         legislature_uri: r.rif_leg ?? "",
+        description: r.description ?? "",
         url: r.url ?? "",
         html_url,
       };
