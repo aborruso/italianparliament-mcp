@@ -76,14 +76,21 @@ OFFSET ${input.offset}`;
 
     const results = await cdQuery(query);
     const raw = flattenBindings(results);
-    const rows = raw.map((r) => ({
-      group_uri: r.group ?? "",
-      group_label: r.group_label ?? "",
-      deputy_uri: r.deputy_uri ?? "",
-      start_date: r.start_date ?? "",
-      end_date: r.end_date ?? "",
-      legislature_uri: r.rif_leg ?? "",
-    }));
+    const rows = raw.map((r) => {
+      // dc:date contains "YYYYMMDD-YYYYMMDD" (start-end concatenated) or "YYYYMMDD-" (no end)
+      const raw_date = r.start_date ?? "";
+      const parts = raw_date.split("-");
+      const start = parts[0] ?? "";
+      const end = r.end_date || parts[1] || "";
+      return {
+        group_uri: r.group ?? "",
+        group_label: r.group_label ?? "",
+        deputy_uri: r.deputy_uri ?? "",
+        start_date: start,
+        end_date: end,
+        legislature_uri: r.rif_leg ?? "",
+      };
+    });
     return { rows, columns };
   },
 };

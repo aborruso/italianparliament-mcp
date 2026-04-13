@@ -3,6 +3,7 @@
 ## 2026-04-13
 
 - Gap analysis giornalista vs MCP: 33 user stories testate con tool reali. 13 OK, 14 PARZIALI, 6 KO. Documenti in `docs/gap-analysis-2026-04-13/`.
+- Fix `group-members`: campo `start_date` conteneva inizio+fine concatenati (`20221018-20240916`), `end_date` sempre vuoto. Ora split su `-` con date separate.
 - Aggiunto filtro `region` al tool `deputies`: filtra per circoscrizione/regione con CONTAINS case-insensitive su election_label. Testato: sicilia, lombardia. Circoscrizioni estero: AFRICA, AMERICA, EUROPA.
 - Aggiunto campo `description` al tool `aic` (Camera): contiene il testo/oggetto dell'interrogazione, interpellanza o mozione. Il Senato (sindacato-ispettivo) non espone l'oggetto nell'endpoint SPARQL.
 - Tool `rank` esteso al Senato: 2 nuove dimensioni `sindacato-ispettivo` e `ddl-senato`. Aggiunto campo `chamber` nell'output. Top Senato atti ispettivi: Camusso 786, Rojc 753. Con `--order asc`: Casellati, Bernini, Durigon con 1 atto. Totale dimensioni rank: 7 (5 Camera + 2 Senato).
