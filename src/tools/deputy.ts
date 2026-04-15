@@ -23,6 +23,8 @@ const columns = [
   "gender",
   "description",
   "legislature_uri",
+  "birth_date",
+  "birth_place",
   "election_region",
   "election_district",
   "election_type",
@@ -63,6 +65,7 @@ SELECT ?label ?firstName ?surname ?gender ?description
        ?rif_leg ?depiction ?isReferencedBy ?modified
        ?startDate ?endDate ?electionRegion ?electionDistrict ?electionType
        ?electionList ?electionDate ?electionValidated
+       ?birthDate ?birthPlace
 WHERE {
   <${uri}> rdfs:label ?label .
   OPTIONAL { <${uri}> foaf:firstName ?firstName }
@@ -73,6 +76,11 @@ WHERE {
   OPTIONAL { <${uri}> foaf:depiction ?depiction }
   OPTIONAL { <${uri}> dcterms:isReferencedBy ?isReferencedBy }
   OPTIONAL { <${uri}> ods:modified ?modified }
+  OPTIONAL {
+    <http://dati.camera.it/ocd/persona.rdf/p${uri.match(/\/d(\d+)_\d+$/)?.[1]}> bio:Birth ?birth .
+    OPTIONAL { ?birth bio:date ?birthDate }
+    OPTIONAL { ?birth ocd:rif_luogo ?birthLuogo . ?birthLuogo rdfs:label ?birthPlace }
+  }
   OPTIONAL {
     <${uri}> ocd:rif_mandatoCamera ?mandato .
     OPTIONAL { ?mandato ocd:startDate ?startDate }
@@ -129,6 +137,8 @@ SELECT ?label ?startDate WHERE {
         legislature_uri: r.rif_leg ?? "",
         election_region: r.electionRegion ?? "",
         election_district: r.electionDistrict ?? "",
+        birth_date: r.birthDate ?? "",
+        birth_place: r.birthPlace ?? "",
         election_type: r.electionType ?? "",
         election_list: r.electionList ?? "",
         election_date: r.electionDate ?? "",

@@ -7,6 +7,7 @@ export const OCD_PREFIXES = `
   PREFIX dcterms: <http://purl.org/dc/terms/>
   PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
   PREFIX ods: <http://lod.xdams.org/ontologies/ods/>
+  PREFIX bio: <http://purl.org/vocab/bio/0.1/>
 `;
 
 export const OSR_PREFIXES = `
