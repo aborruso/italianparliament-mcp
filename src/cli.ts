@@ -28,6 +28,7 @@ import { sparqlTool } from "./tools/sparql.js";
 import { rankTool } from "./tools/rank.js";
 import { sindacatoIspettivoTool } from "./tools/sindacato-ispettivo.js";
 import { committeeMembersTool } from "./tools/committee-members.js";
+import { memberBillsTool } from "./tools/member-bills.js";
 import { formatRows, type Format } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
 import type { ToolResult } from "./tools/types.js";
@@ -917,6 +918,32 @@ const committeeMembersList = defineCommand({
   },
 });
 
+const memberBillsList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "List bills as first signatory for a deputy (Camera) or senator (Senato).",
+      memberBillsTool.examples,
+    ),
+  },
+  args: {
+    "member-uri": { type: "string", description: "Full URI of deputy or senator", required: true },
+    legislature: { type: "string", description: "Legislature number (default: 19)" },
+    limit: { type: "string", default: "100" },
+    offset: { type: "string", default: "0" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await memberBillsTool.execute({
+      memberUri: args["member-uri"] as string,
+      legislature: parseIntFlag(args.legislature as string, "legislature"),
+      limit: parseIntFlag(args.limit as string, "limit") ?? 100,
+      offset: Number(args.offset ?? 0),
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
 const sparqlQuery = defineCommand({
   meta: {
     name: "query",
@@ -1094,6 +1121,10 @@ const main = defineCommand({
     "committee-members": defineCommand({
       meta: { name: "committee-members", description: "Senato committee members with roles" },
       subCommands: { list: committeeMembersList },
+    }),
+    "member-bills": defineCommand({
+      meta: { name: "member-bills", description: "Bills as first signatory for a deputy or senator (Camera+Senato)" },
+      subCommands: { list: memberBillsList },
     }),
   },
 });

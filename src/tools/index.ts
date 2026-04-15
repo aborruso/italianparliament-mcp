@@ -26,6 +26,7 @@ import { sparqlTool } from "./sparql.js";
 import { rankTool } from "./rank.js";
 import { sindacatoIspettivoTool } from "./sindacato-ispettivo.js";
 import { committeeMembersTool } from "./committee-members.js";
+import { memberBillsTool } from "./member-bills.js";
 import type { Tool } from "./types.js";
 
 export const tools: Tool[] = [
@@ -57,6 +58,7 @@ export const tools: Tool[] = [
   rankTool,
   sindacatoIspettivoTool,
   committeeMembersTool,
+  memberBillsTool,
 ];
 
 export const toolsByName: Record<string, Tool> = Object.fromEntries(
@@ -92,5 +94,6 @@ export {
   rankTool,
   sindacatoIspettivoTool,
   committeeMembersTool,
+  memberBillsTool,
 };
 export type { Tool, ToolResult } from "./types.js";
