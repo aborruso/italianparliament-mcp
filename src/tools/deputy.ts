@@ -26,8 +26,12 @@ const columns = [
   "election_region",
   "election_district",
   "election_type",
+  "election_list",
+  "election_date",
+  "election_validated",
   "mandate_start",
   "mandate_end",
+  "committees",
   "photo_url",
   "profile_url",
   "html_url",
@@ -58,6 +62,7 @@ export const deputyTool: Tool<typeof inputSchema> = {
 SELECT ?label ?firstName ?surname ?gender ?description
        ?rif_leg ?depiction ?isReferencedBy ?modified
        ?startDate ?endDate ?electionRegion ?electionDistrict ?electionType
+       ?electionList ?electionDate ?electionValidated
 WHERE {
   <${uri}> rdfs:label ?label .
   OPTIONAL { <${uri}> foaf:firstName ?firstName }
@@ -77,17 +82,38 @@ WHERE {
       OPTIONAL { ?el dc:coverage ?electionRegion }
       OPTIONAL { ?el dcterms:spatial ?electionDistrict }
       OPTIONAL { ?el ocd:tipoElezione ?electionType }
+      OPTIONAL { ?el ocd:lista ?electionList }
+      OPTIONAL { ?el dc:date ?electionDate }
     }
+    OPTIONAL { ?mandato ocd:convalida ?electionValidated }
   }
 }
 LIMIT 1`;
 
-    const results = await cdQuery(query);
+    const committeesQuery = `${OCD_PREFIXES}
+SELECT ?label ?startDate WHERE {
+  <${uri}> ocd:membro ?m .
+  ?m <http://www.w3.org/2000/01/rdf-schema#label> ?label .
+  OPTIONAL { ?m ocd:startDate ?startDate }
+}`;
+
+    const [results, committeeResults] = await Promise.all([
+      cdQuery(query),
+      cdQuery(committeesQuery),
+    ]);
     const raw = flattenBindings(results);
     if (raw.length === 0) {
       throw new Error(`Nessun deputato trovato per URI: ${uri}`);
     }
     const r = raw[0];
+    const committees = flattenBindings(committeeResults)
+      .map((x) => {
+        const name = (x.label ?? "").replace(/\s*\(\d{2}\.\d{2}\.\d{4}$/, "").trim();
+        const date = x.startDate ?? "";
+        return date ? `${name} (dal ${date})` : name;
+      })
+      .filter(Boolean)
+      .join(" | ");
     const match = uri.match(/\/d(\d+)_(\d+)$/);
     const html_url = match
       ? `https://www.camera.it/deputati/elenco/${match[2]}-${match[1]}`
@@ -104,8 +130,12 @@ LIMIT 1`;
         election_region: r.electionRegion ?? "",
         election_district: r.electionDistrict ?? "",
         election_type: r.electionType ?? "",
+        election_list: r.electionList ?? "",
+        election_date: r.electionDate ?? "",
+        election_validated: r.electionValidated ?? "",
         mandate_start: r.startDate ?? "",
         mandate_end: r.endDate ?? "",
+        committees,
         photo_url: r.depiction ?? "",
         profile_url: r.isReferencedBy ?? "",
         html_url,
