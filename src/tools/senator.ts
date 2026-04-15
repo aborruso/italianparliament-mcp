@@ -51,8 +51,11 @@ WHERE {
   OPTIONAL { <${input.uri}> foaf:firstName ?firstName }
   OPTIONAL { <${input.uri}> foaf:lastName ?lastName }
   OPTIONAL { <${input.uri}> foaf:gender ?gender }
-  OPTIONAL { <${input.uri}> osr:dataNascita ?birthDate }
-  OPTIONAL { <${input.uri}> osr:luogoNascita ?birthCity }
+  OPTIONAL {
+    <${input.uri}> <http://purl.org/vocab/bio/0.1/birth> ?birth .
+    OPTIONAL { ?birth <http://purl.org/vocab/bio/0.1/date> ?birthDate }
+    OPTIONAL { ?birth <http://purl.org/vocab/bio/0.1/place> ?birthPlace . ?birthPlace rdfs:label ?birthCity }
+  }
   OPTIONAL { <${input.uri}> foaf:depiction ?photo }
   OPTIONAL {
     <${input.uri}> osr:mandato ?m .
