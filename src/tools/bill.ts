@@ -18,6 +18,7 @@ const columns = [
   "initiative",
   "identifier",
   "sponsor_uri",
+  "cosignatories",
   "legislature_uri",
   "url",
   "html_url",
@@ -50,12 +51,21 @@ WHERE {
 }
 LIMIT 1`;
 
-    const results = await cdQuery(query);
+    const cosigsQuery = `${OCD_PREFIXES}
+SELECT ?contributor WHERE {
+  <${input.uri}> dc:contributor ?contributor
+}`;
+
+    const [results, cosigsResults] = await Promise.all([
+      cdQuery(query),
+      cdQuery(cosigsQuery),
+    ]);
     const raw = flattenBindings(results);
     if (raw.length === 0) {
       throw new Error(`Nessun atto trovato per URI: ${input.uri}`);
     }
     const r = raw[0];
+    const cosigs = flattenBindings(cosigsResults).map((x) => x.contributor ?? "").filter(Boolean);
     const m = input.uri.match(/ac(\d+)_(\d+)$/);
     const html_url = m
       ? `https://www.camera.it/leg19/126?leg=${m[1]}&idDocumento=${m[2]}`
@@ -71,6 +81,7 @@ LIMIT 1`;
         initiative: r.initiative ?? "",
         identifier: r.identifier ?? "",
         sponsor_uri: r.primo_firmatario ?? "",
+        cosignatories: cosigs.join(" | "),
         legislature_uri: r.rif_leg ?? "",
         url: r.url ?? "",
         html_url,
