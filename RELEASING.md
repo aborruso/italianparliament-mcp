@@ -54,8 +54,15 @@ più server MCP HTTP su Cloudflare Worker, skill e pacchetto `.dxt`.
    `prepublishOnly` (in `package.json`) ricostruisce `dist/` prima della
    pubblicazione. Il campo `files` include `dist`, `README.md`, `LICENSE`
    (così `dist/`, pur gitignored, finisce nel tarball). Verifica del contenuto
-   prima di pubblicare: `npm pack --dry-run`. Dopo la pubblicazione:
-   `npm i -g @aborruso/italianparliament-mcp` → comando `italianparliament`.
+   prima di pubblicare: `npm pack --dry-run`.
+
+   **Aggiorna la CLI locale** (l'install globale resta alla versione vecchia
+   finché non lo rifai):
+
+   ```bash
+   npm install -g @aborruso/italianparliament-mcp   # aggiorna il comando `italianparliament`
+   italianparliament --version 2>/dev/null || npm view @aborruso/italianparliament-mcp version  # verifica
+   ```
 
 8. **Deploy del Worker** su Cloudflare:
 
