@@ -64,7 +64,7 @@ italianparliament senator show --uri <uri>
 ```
 
 ### `person-career show`
-Carriera unificata (legislature + governo).
+Carriera unificata: mandati per legislatura + appartenenza ai gruppi (cronologica, con date) + incarichi di governo + link Wikidata.
 ```bash
 italianparliament person-career show --uri http://dati.camera.it/ocd/deputato.rdf/d301551_15
 ```
@@ -122,6 +122,13 @@ italianparliament bill-progress list --legislature 19
 italianparliament bill-signatories show --ddl-uri <ddl-uri>
 ```
 
+### `bill-rapporteurs list`
+Relatori di un DDL, **Camera o Senato** (riconosciuto dall'URI): nome, tipo (Relatore / f.f.), commissione/organo, data.
+```bash
+italianparliament bill-rapporteurs list --bill-uri http://dati.camera.it/ocd/attocamera.rdf/ac19_2807
+italianparliament bill-rapporteurs list --bill-uri http://dati.senato.it/ddl/59313
+```
+
 ### `amendments list`
 Emendamenti Senato; `--ddl-uri` per gli emendamenti a un DDL specifico.
 ```bash
@@ -150,7 +157,7 @@ italianparliament senato-votes list --date-from 2026-01-01 --date-to 2026-03-31
 ```
 
 ### `senato-vote-detail show`
-Voto del singolo senatore in una votazione (URI da `senato-votes`).
+Voto del singolo senatore in una votazione (URI da `senato-votes`); include il gruppo alla data del voto (`group_label`) → voto per gruppo.
 ```bash
 italianparliament senato-vote-detail show --vote-uri http://dati.senato.it/votazione/19-167-42
 italianparliament senato-vote-detail show --vote-uri http://dati.senato.it/votazione/19-167-42 --vote-type Contrario
@@ -253,7 +260,8 @@ italianparliament rank list --rank-by aic-primo-firmatario --legislature 19 --li
 `--rank-by` values: `aic-primo-firmatario` | `aic-cofirmatario` | `bills-primo-firmatario` | `bills-cofirmatario` | `speeches` | `sindacato-ispettivo` | `ddl-senato`
 
 ### `sparql query`
-Query SPARQL libera.
+Query SPARQL libera. Funziona anche senza il sotto-comando `query` (es. `sparql --endpoint ...`).
 ```bash
 italianparliament sparql query --endpoint camera --query "SELECT ?s WHERE { ?s a <...> } LIMIT 10"
+italianparliament sparql --endpoint senato --query "SELECT ?s WHERE { ?s ?p ?o } LIMIT 10"
 ```

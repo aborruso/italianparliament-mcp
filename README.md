@@ -84,7 +84,7 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 | `aic list` | Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni), filtrabile per data e per parola chiave nel testo (`--keyword`) |
 | `votes list` | Votazioni Camera con contatori (favorevoli, contrari, astenuti), filtrabile per data, tipo fiducia (`--confidence-vote`), DDL collegato (`--bill-code`) |
 | `vote-detail show` | Come ha votato ogni singolo deputato in una votazione, con nome e gruppo |
-| `bill-rapporteurs list` | Relatori di un DDL Camera per commissione, con tipo (Relatore / Relatore f.f.) e data |
+| `bill-rapporteurs list` | Relatori di un DDL (Camera o Senato, riconosciuti dall'URL): nome, tipo (Relatore / f.f.), commissione/organo e data |
 | `speeches list` | Interventi in aula, filtrabile per legislatura e deputato |
 
 ### Attivita legislativa — Senato
@@ -97,7 +97,7 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 | `documents list` | Documenti parlamentari: atti del governo, atti UE, relazioni Corte dei Conti |
 | `sindacato-ispettivo list` | Atti di sindacato ispettivo Senato (interrogazioni, interpellanze, mozioni), filtrabile per data |
 | `senato-votes list` | Votazioni d'Assemblea del Senato con esito, contatori (favorevoli/contrari/astenuti), tipo, data e DDL collegato. Filtrabile per legislatura, data, DDL |
-| `senato-vote-detail show` | Come ha votato ogni singolo senatore in una votazione (favorevole/contrario/astenuto/presente non votante/in congedo) |
+| `senato-vote-detail show` | Come ha votato ogni singolo senatore in una votazione (favorevole/contrario/astenuto/presente non votante/in congedo), con il gruppo di appartenenza alla data del voto — consente il voto per gruppo |
 | `committee-sessions list` | Sedute di commissione in cui un DDL è stato trattato, con data, commissione, tipo seduta e numero di interventi (l'iter del provvedimento nelle commissioni) |
 
 ### Testo dei disegni di legge
@@ -209,7 +209,7 @@ Quali interrogazioni sono state presentate questo mese?
 italianparliament aic list --legislature 19 --date-from 2026-04-01
 ```
 
-Quante interrogazioni parlano di un tema (es. xylella)?
+Quali interrogazioni parlano di un tema (es. xylella)?
 
 ```
 italianparliament aic list --legislature 19 --keyword xylella
@@ -239,7 +239,7 @@ Quali interrogazioni al Senato questa settimana?
 italianparliament sindacato-ispettivo list --legislature 19 --date-from 2026-04-07
 ```
 
-Quante interrogazioni ha presentato un deputato?
+Quali interrogazioni ha presentato un deputato?
 
 ```
 italianparliament aic list --deputy-uri http://dati.camera.it/ocd/deputato.rdf/d308001_19
@@ -317,6 +317,50 @@ Quali DDL ha presentato come primo firmatario un parlamentare?
 italianparliament member-bills list --member-uri http://dati.senato.it/senatore/32
 italianparliament member-bills list --member-uri http://dati.camera.it/ocd/deputato.rdf/d308920_19
 ```
+
+### Un'inchiesta passo per passo: la riforma della Corte dei Conti
+
+A dicembre 2025 il Senato approva in via definitiva la riforma che limita i poteri di controllo dei giudici contabili (il cosiddetto "scudo erariale"). Ricostruiamo i fatti partendo solo dai dati ufficiali.
+
+Trova il provvedimento e il suo stato (cerca per parola chiave nell'iter del Senato):
+
+```
+italianparliament bill-progress list --legislature 19 --keyword "Corte dei conti"
+```
+
+Risultato: il DDL **S.1457** (`http://dati.senato.it/ddl/59070`), "appr. definit. Legge" il **2025-12-27**, iniziativa **Dep. Foti Tommaso**.
+
+Chi l'ha firmato? Il primo firmatario e i cofirmatari:
+
+```
+italianparliament bill-signatories show --ddl-uri http://dati.senato.it/ddl/59070
+```
+
+Risultato: primo firmatario **On. Tommaso Foti** (FdI), cofirmatari De Corato e Barelli.
+
+Chi ha relazionato il testo in Senato (relatori di commissione e d'aula)?
+
+```
+italianparliament bill-rapporteurs list --bill-uri http://dati.senato.it/ddl/59070
+```
+
+Risultato: relatori in commissione **Paolo Tosato** (Lega) e **Salvatore Sallemi** (FdI).
+
+Com'è andata la votazione finale?
+
+```
+italianparliament senato-votes list --ddl-uri http://dati.senato.it/ddl/59070
+```
+
+Risultato: votazione `19-376-2` del **2025-12-27**, **approvato** con **93 favorevoli, 51 contrari, 5 astenuti**.
+
+Come ha votato ogni senatore, e soprattutto come si sono divisi i gruppi? Il dettaglio include il gruppo di appartenenza alla data del voto:
+
+```
+italianparliament senato-vote-detail show --vote-uri http://dati.senato.it/votazione/19-376-2 --format jsonl
+```
+
+Da qui si verifica che **Matteo Salvini** (Lega) ha votato **Favorevole** e si ricostruisce il voto per gruppo: a favore FdI (49), Lega (25), Forza Italia (12) e Civici d'Italia (6); contrari PD (27) e M5S (21); Italia Viva astenuta (5) — la classica spaccatura maggioranza/opposizione.
 
 ## Note sui dati
 

@@ -3,6 +3,7 @@ import { cdQuery } from "../core/client.js";
 import { OCD_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
 import { decodeHtml } from "../core/decode-html.js";
+import { cleanGroupLabel } from "../core/group-label.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -64,6 +65,14 @@ SELECT ?kind ?leg ?role ?start ?end ?uri ?name ?wikidata WHERE {
     ?uri a ocd:deputato ; ocd:rif_mandatoCamera ?m ; ocd:rif_leg ?leg .
     BIND("mandato-camera" AS ?kind)
   } UNION {
+    <${persona}> ocd:rif_mandatoCamera ?m2 .
+    ?depU a ocd:deputato ; ocd:rif_mandatoCamera ?m2 .
+    ?uri a ocd:gruppoParlamentare ; rdfs:label ?role ; ocd:siComponeDi ?gm ; ocd:rif_leg ?leg .
+    ?gm ocd:rif_deputato ?depU .
+    OPTIONAL { ?gm dc:date ?start }
+    OPTIONAL { ?gm ocd:dataFine ?end }
+    BIND("gruppo" AS ?kind)
+  } UNION {
     <${persona}> ocd:rif_membroGoverno ?uri .
     ?uri rdfs:label ?role .
     OPTIONAL { ?uri ocd:startDate ?start }
@@ -103,6 +112,18 @@ SELECT ?kind ?leg ?role ?start ?end ?uri ?name ?wikidata WHERE {
           end_date: "",
           uri: r.uri ?? "",
         });
+      } else if (r.kind === "gruppo") {
+        // dc:date = "YYYYMMDD-YYYYMMDD" (inizio-fine concatenati) o "YYYYMMDD-".
+        const parts = (r.start ?? "").split("-");
+        rows.push({
+          kind: "gruppo",
+          chamber: "camera",
+          legislature: legNum(r.leg ?? ""),
+          role: cleanGroupLabel(r.role ?? ""),
+          start_date: parts[0] ?? "",
+          end_date: r.end || parts[1] || "",
+          uri: r.uri ?? "",
+        });
       } else if (r.kind === "governo") {
         rows.push({
           kind: "governo",
@@ -122,6 +143,19 @@ SELECT ?kind ?leg ?role ?start ?end ?uri ?name ?wikidata WHERE {
       if (seen.has(k)) return false;
       seen.add(k);
       return true;
+    });
+    // Ordine leggibile: persona, poi mandati, gruppi e governo; entro ogni
+    // categoria in ordine cronologico di inizio.
+    const kindOrder: Record<string, number> = {
+      persona: 0,
+      "mandato-camera": 1,
+      gruppo: 2,
+      governo: 3,
+    };
+    deduped.sort((a, b) => {
+      const ko = (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9);
+      if (ko !== 0) return ko;
+      return (a.start_date || "").localeCompare(b.start_date || "");
     });
     return { rows: deduped, columns };
   },

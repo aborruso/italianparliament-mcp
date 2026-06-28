@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cdQuery } from "../core/client.js";
 import { OCD_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { cleanGroupLabel } from "../core/group-label.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -71,6 +72,7 @@ WHERE {
   OPTIONAL { ?group ocd:rif_leg ?rif_leg }
   ${filters.join("\n  ")}
 }
+ORDER BY ?deputy_uri ?start_date
 LIMIT ${input.limit}
 OFFSET ${input.offset}`;
 
@@ -84,7 +86,7 @@ OFFSET ${input.offset}`;
       const end = r.end_date || parts[1] || "";
       return {
         group_uri: r.group ?? "",
-        group_label: r.group_label ?? "",
+        group_label: cleanGroupLabel(r.group_label ?? ""),
         deputy_uri: r.deputy_uri ?? "",
         start_date: start,
         end_date: end,

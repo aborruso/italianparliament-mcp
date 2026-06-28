@@ -797,12 +797,12 @@ const billRapporteursList = defineCommand({
   meta: {
     name: "list",
     description: withExamples(
-      "List rapporteurs of a Camera DDL by committee.",
+      "List rapporteurs of a DDL (Camera or Senato, auto-detected from the URI).",
       billRapporteursTool.examples,
     ),
   },
   args: {
-    "bill-uri": { type: "string", description: "Full URI of a Camera DDL", required: true },
+    "bill-uri": { type: "string", description: "Full URI of a DDL (Camera or Senato)", required: true },
     limit: { type: "string", default: "100" },
     format: { type: "string", default: "csv" },
   },
@@ -985,6 +985,27 @@ const memberBillsList = defineCommand({
   },
 });
 
+const sparqlArgs = {
+  endpoint: { type: "string", description: "camera or senato", required: true },
+  query: { type: "string", description: "SPARQL SELECT query", required: true },
+  limit: { type: "string", default: "25" },
+  format: { type: "string", default: "csv" },
+} as const;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function runSparqlArgs(args: Record<string, any>): Promise<void> {
+  const endpoint = args.endpoint as string;
+  if (endpoint !== "camera" && endpoint !== "senato") {
+    throw new Error('Invalid --endpoint. Allowed: camera, senato.');
+  }
+  const result = await runTool(sparqlTool, {
+    query: args.query as string,
+    endpoint,
+    limit: parseIntFlag(args.limit as string, "limit") ?? 25,
+  });
+  emit(result, parseFormat(args.format as string));
+}
+
 const sparqlQuery = defineCommand({
   meta: {
     name: "query",
@@ -993,24 +1014,8 @@ const sparqlQuery = defineCommand({
       sparqlTool.examples,
     ),
   },
-  args: {
-    endpoint: { type: "string", description: "camera or senato", required: true },
-    query: { type: "string", description: "SPARQL SELECT query", required: true },
-    limit: { type: "string", default: "25" },
-    format: { type: "string", default: "csv" },
-  },
-  async run({ args }) {
-    const endpoint = args.endpoint as string;
-    if (endpoint !== "camera" && endpoint !== "senato") {
-      throw new Error('Invalid --endpoint. Allowed: camera, senato.');
-    }
-    const result = await runTool(sparqlTool, {
-      query: args.query as string,
-      endpoint,
-      limit: parseIntFlag(args.limit as string, "limit") ?? 25,
-    });
-    emit(result, parseFormat(args.format as string));
-  },
+  args: sparqlArgs,
+  run: ({ args }) => runSparqlArgs(args),
 });
 
 const documentsList = defineCommand({
@@ -1267,6 +1272,7 @@ const CAPABILITIES: { cmd: string; terms: string[]; desc: string }[] = [
   { cmd: "deputy show / senator show", terms: ["scheda", "deputato", "senatore", "anagrafica", "nascita"], desc: "Scheda di un parlamentare" },
   { cmd: "bills list / bill show", terms: ["disegno di legge", "ddl camera", "proposta di legge", "atti"], desc: "Disegni di legge Camera" },
   { cmd: "bill-progress list", terms: ["iter", "ddl senato", "stato ddl"], desc: "Iter dei DDL al Senato" },
+  { cmd: "bill-rapporteurs list", terms: ["relatore", "relatori", "relatrice", "chi relaziona"], desc: "Relatori di un DDL (Camera o Senato, dall'URI)" },
   { cmd: "bill-text links / fetch", terms: ["testo", "articolato", "pdf", "testo ddl", "contenuto legge"], desc: "Link al testo di un DDL e download/conversione (Senato)" },
   { cmd: "amendments list", terms: ["emendamenti", "ostruzionismo"], desc: "Emendamenti Senato (--ddl-uri per un DDL)" },
   { cmd: "committee-sessions list", terms: ["commissione", "sedute", "lavori commissione"], desc: "Sedute di commissione su un DDL (Senato)" },
@@ -1436,7 +1442,7 @@ const main = defineCommand({
       subCommands: { show: billSignatoriesShow },
     }),
     "bill-rapporteurs": defineCommand({
-      meta: { name: "bill-rapporteurs", description: "Rapporteurs of a Camera DDL by committee" },
+      meta: { name: "bill-rapporteurs", description: "Rapporteurs of a DDL (Camera or Senato)" },
       subCommands: { list: billRapporteursList },
     }),
     amendments: defineCommand({
@@ -1448,7 +1454,7 @@ const main = defineCommand({
       subCommands: { list: documentsList },
     }),
     sparql: defineCommand({
-      meta: { name: "sparql", description: "Free SPARQL SELECT query on Camera or Senato" },
+      meta: { name: "sparql", description: "Free SPARQL SELECT query on Camera or Senato (use: sparql query --endpoint ...)" },
       subCommands: { query: sparqlQuery },
     }),
     rank: defineCommand({
@@ -1506,6 +1512,14 @@ process.stderr.write = ((chunk: unknown, ...rest: unknown[]) => {
   if (s.includes("\n    at ") || /\x1b\[.*ERROR/.test(s)) return true;
   return (_origWrite as Function)(chunk, ...rest);
 }) as typeof process.stderr.write;
+
+// Shim ergonomico: `sparql --endpoint ...` (senza il sotto-comando `query`)
+// è un errore facile per un agente. citty con i subCommands mostrerebbe l'help;
+// qui inseriamo `query` così il comando funziona come `sparql query ...`.
+const argv = process.argv.slice(2);
+if (argv[0] === "sparql" && argv[1] !== "query" && argv[1] !== "--help" && argv[1] !== "-h") {
+  process.argv.splice(3, 0, "query");
+}
 
 runMain(main).catch((err: unknown) => {
   if (err instanceof ZodError) {

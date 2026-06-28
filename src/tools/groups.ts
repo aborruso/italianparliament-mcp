@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { cdQuery } from "../core/client.js";
 import { flattenBindings } from "../core/flatten.js";
+import { cleanGroupLabel } from "../core/group-label.js";
 import { OCD_PREFIXES } from "../core/prefixes.js";
 import type { Tool } from "./types.js";
 
@@ -47,10 +48,10 @@ LIMIT ${input.limit}`;
     const results = await cdQuery(query);
     const raw = flattenBindings(results);
     const rows = raw.map((r) => {
-      const label = r.label ?? "";
-      // Extract acronym from label, e.g. "FRATELLI D'ITALIA (FDI) (18.10.2022" -> "FDI"
+      const rawLabel = r.label ?? "";
+      // Extract acronym from raw label, e.g. "FRATELLI D'ITALIA (FDI) (18.10.2022" -> "FDI"
       // Handles nested parens like "NM(N-C-U-I)M-CP"
-      const acronymMatch = label.match(/\(([A-Z][A-Z0-9 /(),-]*)\)\s*\(/);
+      const acronymMatch = rawLabel.match(/\(([A-Z][A-Z0-9 /(),-]*)\)\s*\(/);
       const acronym = r.acronym || (acronymMatch ? acronymMatch[1] : "");
       const uriStr = r.s ?? "";
       const idMatch = uriStr.match(/\/gr(\d+)$/);
@@ -59,8 +60,8 @@ LIMIT ${input.limit}`;
         : "";
       return {
         uri: uriStr,
-        label,
-        title: r.title ?? "",
+        label: cleanGroupLabel(rawLabel),
+        title: cleanGroupLabel(r.title ?? ""),
         acronym,
         legislature_uri: r.rif_leg ?? "",
         html_url,

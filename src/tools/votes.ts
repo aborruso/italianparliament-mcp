@@ -107,10 +107,6 @@ export const votesTool: Tool<typeof inputSchema> = {
     "italianparliament votes list --bill-code 2807",
   ],
   async execute(input) {
-    const legFilter =
-      input.legislature !== undefined
-        ? `FILTER(?rif_leg = <http://dati.camera.it/ocd/legislatura.rdf/repubblica_${input.legislature}>)`
-        : "";
     const approvedFilter =
       input.approved !== undefined
         ? `FILTER(?approvato = "${input.approved ? 1 : 0}"^^xsd:integer)`
@@ -139,45 +135,70 @@ export const votesTool: Tool<typeof inputSchema> = {
       ? `FILTER(CONTAINS(STR(?description), "${billCodeEsc}"))`
       : "";
 
+    // Subquery-first: prima selezioniamo/ordiniamo/limitiamo i soli URI delle
+    // votazioni (con i filtri come pattern vincolanti), poi agganciamo i ~17
+    // OPTIONAL solo alle righe risultanti. Senza questo, Virtuoso materializza
+    // tutti gli OPTIONAL su decine di migliaia di votazioni prima di ordinare e
+    // limitare → ~33s (e timeout). Con la subquery: <1s.
+    // NB: legislatura come triple vincolante, non FILTER su variabile OPTIONAL.
+    const V = "http://dati.camera.it/ocd";
+    // ?vd = data interna alla subquery. Alcune votazioni hanno più dc:date:
+    // GROUP BY ?s + MAX(?vd) garantisce una sola riga per voto (altrimenti i
+    // duplicati consumano slot del LIMIT e tornano meno voti del richiesto).
+    const inner: string[] = [`?s a <${V}/votazione> .`];
+    if (input.legislature !== undefined)
+      inner.push(`?s <${V}/rif_leg> <http://dati.camera.it/ocd/legislatura.rdf/repubblica_${input.legislature}> .`);
+    if (input.dateFrom || input.dateTo) {
+      inner.push(`?s dc:date ?vd .`);
+      if (input.dateFrom) inner.push(`FILTER(?vd >= "${input.dateFrom.replace(/-/g, "")}")`);
+      if (input.dateTo) inner.push(`FILTER(?vd <= "${input.dateTo.replace(/-/g, "")}")`);
+    } else {
+      inner.push(`OPTIONAL { ?s dc:date ?vd }`);
+    }
+    if (approvedFilter) inner.push(`?s <${V}/approvato> ?approvato . ${approvedFilter}`);
+    if (confidenceFilter) inner.push(`?s <${V}/richiestaFiducia> ?richiestaFiducia . ${confidenceFilter}`);
+    if (keywordFilter) inner.push(`?s rdfs:label ?label . OPTIONAL { ?s dc:title ?title } ${keywordFilter}`);
+    if (billCodeFilter) inner.push(`?s dc:description ?description . ${billCodeFilter}`);
+
     const coreSelect = `SELECT DISTINCT ?s ?label ?title ?description ?type ?date
                 ?approvato ?favorevoli ?contrari ?astenuti
                 ?presenti ?votanti ?maggioranza
                 ?richiestaFiducia ?votazioneSegreta ?votazioneFinale
                 ?rif_leg ?rif_seduta ?rif_attoCamera ?url
 WHERE {
-  ?s a <http://dati.camera.it/ocd/votazione> .
+  {
+    SELECT ?s (MAX(?vd) AS ?date) WHERE {
+      ${inner.join("\n      ")}
+    }
+    GROUP BY ?s
+    ORDER BY DESC(?date)
+    LIMIT ${input.limit}
+    OFFSET ${input.offset}
+  }
   ?s rdfs:label ?label .
   OPTIONAL { ?s dc:title ?title }
   OPTIONAL { ?s dc:description ?description }
   OPTIONAL { ?s dc:type ?type }
-  OPTIONAL { ?s dc:date ?date }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/approvato> ?approvato }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/favorevoli> ?favorevoli }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/contrari> ?contrari }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/astenuti> ?astenuti }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/presenti> ?presenti }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/votanti> ?votanti }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/maggioranza> ?maggioranza }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/richiestaFiducia> ?richiestaFiducia }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/votazioneSegreta> ?votazioneSegreta }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/votazioneFinale> ?votazioneFinale }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/rif_leg> ?rif_leg }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/rif_seduta> ?rif_seduta }
-  OPTIONAL { ?s <http://dati.camera.it/ocd/rif_attoCamera> ?rif_attoCamera }
+  OPTIONAL { ?s <${V}/approvato> ?approvato }
+  OPTIONAL { ?s <${V}/favorevoli> ?favorevoli }
+  OPTIONAL { ?s <${V}/contrari> ?contrari }
+  OPTIONAL { ?s <${V}/astenuti> ?astenuti }
+  OPTIONAL { ?s <${V}/presenti> ?presenti }
+  OPTIONAL { ?s <${V}/votanti> ?votanti }
+  OPTIONAL { ?s <${V}/maggioranza> ?maggioranza }
+  OPTIONAL { ?s <${V}/richiestaFiducia> ?richiestaFiducia }
+  OPTIONAL { ?s <${V}/votazioneSegreta> ?votazioneSegreta }
+  OPTIONAL { ?s <${V}/votazioneFinale> ?votazioneFinale }
+  OPTIONAL { ?s <${V}/rif_leg> ?rif_leg }
+  OPTIONAL { ?s <${V}/rif_seduta> ?rif_seduta }
+  OPTIONAL { ?s <${V}/rif_attoCamera> ?rif_attoCamera }
   OPTIONAL { ?s dc:relation ?url }
-  ${legFilter}
-  ${approvedFilter}
-  ${confidenceFilter}
-  ${keywordFilter}
-  ${billCodeFilter}
-  ${dateFromFilter}
-  ${dateToFilter}
-}`;
+}
+ORDER BY DESC(?date)`;
 
     // Per il count usiamo solo i pattern vincolanti (no OPTIONAL): con ~13
     // OPTIONAL numerici e decine di migliaia di votazioni il wrap dell'intero
     // SELECT manda Virtuoso in timeout.
-    const V = "http://dati.camera.it/ocd";
     const countWhere = [`?s a <${V}/votazione> .`];
     if (input.legislature !== undefined)
       countWhere.push(`?s <${V}/rif_leg> <http://dati.camera.it/ocd/legislatura.rdf/repubblica_${input.legislature}> .`);
@@ -189,7 +210,7 @@ WHERE {
 
     const query = input.countOnly
       ? `${OCD_PREFIXES}\nSELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {\n${countWhere.join("\n  ")}\n}`
-      : `${OCD_PREFIXES}\n${coreSelect}\nORDER BY DESC(?date)\nLIMIT ${input.limit}\nOFFSET ${input.offset}`;
+      : `${OCD_PREFIXES}\n${coreSelect}`;
 
     const results = await cdQuery(query);
     if (input.countOnly) {
@@ -211,6 +232,16 @@ WHERE {
       }
       return row;
     });
-    return { rows, columns };
+    // Dedup per uri: gli OPTIONAL multi-valore della query esterna (es. dc:type,
+    // dc:relation) possono produrre più righe per la stessa votazione. Teniamo
+    // la prima così da avere una riga per voto (coerente col LIMIT).
+    const seen = new Set<string>();
+    const deduped = rows.filter((r) => {
+      const uri = r.uri ?? "";
+      if (seen.has(uri)) return false;
+      seen.add(uri);
+      return true;
+    });
+    return { rows: deduped, columns };
   },
 };

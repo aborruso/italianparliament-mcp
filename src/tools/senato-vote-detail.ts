@@ -25,12 +25,49 @@ const inputSchema = z.object({
     .describe("Filtra per tipo di voto"),
 });
 
-const columns = ["senator_uri", "senator_name", "vote"];
+const columns = ["senator_uri", "senator_name", "group_label", "vote"];
+
+// Data della seduta della votazione: serve per agganciare il gruppo del senatore
+// attivo in quel giorno. Query separata, indipendente dai conteggi del voto.
+async function fetchVoteDate(voteUri: string): Promise<string | null> {
+  const query = `${OSR_PREFIXES}
+SELECT ?date WHERE { <${voteUri}> osr:seduta ?s . ?s osr:dataSeduta ?date } LIMIT 1`;
+  const raw = flattenBindings(await snQuery(query));
+  return raw[0]?.date ?? null;
+}
+
+// Mappa senatore_uri → etichetta gruppo attiva alla data del voto. Costruita con
+// una sola query (logica di senator-group-members con asOf = data voto), poi
+// unita in JS ai risultati per categoria: i conteggi del voto restano intatti.
+async function fetchGroupMap(asOf: string): Promise<Map<string, string>> {
+  const query = `${OSR_PREFIXES}
+PREFIX ocd: <http://dati.camera.it/ocd/>
+SELECT DISTINCT ?senator_uri ?group_label WHERE {
+  ?senator_uri a osr:Senatore ; ocd:aderisce ?m .
+  ?m a ocd:adesioneGruppo ; osr:gruppo ?g ; osr:inizio ?ini .
+  OPTIONAL { ?m osr:fine ?fine }
+  ?g osr:denominazione ?den .
+  ?den osr:titolo ?group_label ; osr:inizio ?dini .
+  OPTIONAL { ?den osr:fine ?dfine }
+  FILTER(str(?ini) <= "${asOf}")
+  FILTER(!BOUND(?fine) || str(?fine) >= "${asOf}")
+  FILTER(str(?dini) <= "${asOf}")
+  FILTER(!BOUND(?dfine) || str(?dfine) >= "${asOf}")
+}`;
+  const raw = flattenBindings(await snQuery(query));
+  const map = new Map<string, string>();
+  for (const r of raw) {
+    if (r.senator_uri && r.group_label && !map.has(r.senator_uri)) {
+      map.set(r.senator_uri, r.group_label);
+    }
+  }
+  return map;
+}
 
 export const senatoVoteDetailTool: Tool<typeof inputSchema> = {
   name: "senato-vote-detail",
   description:
-    "[SENATO] Voto individuale di ogni senatore in una singola votazione d'Assemblea: come ha votato (Favorevole, Contrario, Astenuto, Presente non votante, In congedo/missione) con nome. Richiede l'URI della votazione (da senato-votes). Il gruppo non è incluso: incrociare con senator-group-members.",
+    "[SENATO] Voto individuale di ogni senatore in una singola votazione d'Assemblea: come ha votato (Favorevole, Contrario, Astenuto, Presente non votante, In congedo/missione), con nome e gruppo di appartenenza alla data del voto. Richiede l'URI della votazione (da senato-votes).",
   inputSchema,
   examples: [
     "italianparliament senato-vote-detail show --vote-uri http://dati.senato.it/votazione/19-167-42",
@@ -41,25 +78,34 @@ export const senatoVoteDetailTool: Tool<typeof inputSchema> = {
       ? CATEGORIES.filter((c) => c.label === input.voteType)
       : CATEGORIES;
 
-    const results = await Promise.all(
-      wanted.map(async (cat) => {
-        const query = `${OSR_PREFIXES}
+    // Conteggi del voto (5 query invariate) e mappa gruppi in parallelo.
+    const voteDate = await fetchVoteDate(input.voteUri);
+    const [groupMap, results] = await Promise.all([
+      voteDate ? fetchGroupMap(voteDate) : Promise.resolve(new Map<string, string>()),
+      Promise.all(
+        wanted.map(async (cat) => {
+          const query = `${OSR_PREFIXES}
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 SELECT DISTINCT ?sen ?nome ?cognome WHERE {
   <${input.voteUri}> osr:${cat.prop} ?sen .
   OPTIONAL { ?sen foaf:firstName ?nome }
   OPTIONAL { ?sen foaf:lastName ?cognome }
 }`;
-        const raw = flattenBindings(await snQuery(query));
-        return raw.map((r) => ({
-          senator_uri: r.sen ?? "",
-          senator_name: `${r.nome ?? ""} ${r.cognome ?? ""}`.trim(),
-          vote: cat.label,
-        }));
-      }),
-    );
+          const raw = flattenBindings(await snQuery(query));
+          return raw.map((r) => ({
+            senator_uri: r.sen ?? "",
+            senator_name: `${r.nome ?? ""} ${r.cognome ?? ""}`.trim(),
+            group_label: "",
+            vote: cat.label,
+          }));
+        }),
+      ),
+    ]);
 
-    const rows = results.flat();
+    const rows = results.flat().map((row) => ({
+      ...row,
+      group_label: groupMap.get(row.senator_uri) ?? "",
+    }));
     if (rows.length === 0) {
       throw new Error(`Nessun voto trovato per la votazione: ${input.voteUri}`);
     }

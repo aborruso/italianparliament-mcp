@@ -27,8 +27,9 @@ Scheda di un senatore.
 - `uri` (required): URI del senatore
 
 ### `person-career`
-Carriera unificata di una persona: mandati da deputato (per legislatura) + incarichi di governo + link Wikidata. Risolve doppio incarico parlamento+governo e carriera multi-legislatura.
+Carriera unificata di una persona: mandati da deputato (per legislatura) + appartenenza ai gruppi (con date) + incarichi di governo + link Wikidata. Risolve doppio incarico parlamento+governo e carriera multi-legislatura.
 - `uri` (required): URI deputato o persona (Camera)
+- Output ordinato: persona, mandati, gruppi (cronologici), governo.
 - Camera+governo affidabile; Camera↔Senato non nei dati (solo via nome + data nascita).
 
 ## Attività legislativa — Camera
@@ -76,6 +77,10 @@ Iter DDL al Senato.
 Firmatari di un DDL Senato.
 - `ddlUri` (required): URI del DDL
 
+### `bill-rapporteurs`
+Relatori di un DDL, **Camera o Senato** (il ramo è riconosciuto dall'URI). Nome, tipo (Relatore / f.f.), commissione/organo e data.
+- `billUri` (required): URI del DDL (Camera `attocamera.rdf/...` o Senato `ddl/...`)
+
 ### `amendments`
 Emendamenti Senato con DDL collegato.
 - `legislature`: numero legislatura
@@ -97,10 +102,9 @@ Votazioni d'Assemblea del Senato: esito, contatori, tipo, data seduta, DDL colle
 - `dateFrom`/`dateTo`: intervallo data seduta (YYYY-MM-DD)
 
 ### `senato-vote-detail`
-Voto del singolo senatore in una votazione.
+Voto del singolo senatore in una votazione, con il gruppo di appartenenza alla data del voto (colonna `group_label`) — consente il voto per gruppo.
 - `voteUri` (required): URI della votazione (da `senato-votes`)
 - `voteType`: filtro (Favorevole/Contrario/Astenuto/Presente non votante/In congedo/missione)
-- Il gruppo non è incluso: incrociare con `senator-group-members`.
 
 ### `committee-sessions`
 Sedute di commissione in cui un DDL è stato trattato (iter in commissione).

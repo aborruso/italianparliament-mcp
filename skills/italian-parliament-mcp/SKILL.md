@@ -40,7 +40,7 @@ See [tool reference](references/tools.md) for the full list with parameters and 
 | Iter DDL Senato | `bill-progress` / `bill-signatories` |
 | Testo integrale di un DDL (articolato) | `bill-text` |
 | DDL di un parlamentare come primo firmatario | `member-bills` |
-| Relatori di un DDL Senato | `bill-rapporteurs` |
+| Relatori di un DDL (Camera o Senato) | `bill-rapporteurs` |
 | Membri di una commissione Senato | `committee-members` |
 | Sedute di commissione su un DDL Senato | `committee-sessions` |
 | Interrogazioni, interpellanze, mozioni | `aic` (Camera) / `sindacato-ispettivo` (Senato) |
@@ -88,7 +88,7 @@ Use `rank` with `rankBy`: `aic-primo-firmatario`, `aic-cofirmatario`, `bills-pri
 
 **Who voted how (Senato)**
 1. `senato-votes` → get vote URI (filter by `ddlUri` for votes on a bill, or by date)
-2. `senato-vote-detail` with the URI. The group is not included: cross with `senator-group-members` for the group breakdown.
+2. `senato-vote-detail` with the URI. Each row includes the senator's `group_label` at the vote date, so the group breakdown comes directly (no need to cross-reference).
 
 **Read the actual text of a bill (articolato)**
 
