@@ -1,5 +1,7 @@
 # Gap Analysis: giornalista parlamentare vs MCP
 
+> **Archiviata.** Analisi storica; la roadmap proposta qui è stata implementata. Ripartenza aggiornata: [gap-analysis-2026-06-28](../gap-analysis-2026-06-28/README.md).
+
 **Data:** 2026-04-13
 
 ## Cosa contiene questa cartella
