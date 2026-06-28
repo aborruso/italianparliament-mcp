@@ -11,6 +11,11 @@ const inputSchema = z.object({
     .positive()
     .optional()
     .describe("Numero legislatura"),
+  ddlUri: z
+    .string()
+    .url()
+    .optional()
+    .describe("Filtra gli emendamenti a un DDL specifico (es. http://dati.senato.it/ddl/56260)"),
   limit: z.number().int().min(1).max(1000).default(100),
   offset: z.number().int().min(0).default(0),
 });
@@ -21,25 +26,30 @@ const columns = [
   "number",
   "type",
   "legislature",
+  "ddl_uri",
   "url",
 ];
 
 export const amendmentsTool: Tool<typeof inputSchema> = {
   name: "amendments",
   description:
-    "[SENATO] Emendamenti presentati al Senato con numero, tipo e link al testo ufficiale. Filtrabile per legislatura.",
+    "[SENATO] Emendamenti presentati al Senato con numero, tipo, DDL collegato e link al testo ufficiale. Filtrabile per legislatura e per DDL (utile per contare/leggere gli emendamenti a un provvedimento).",
   inputSchema,
   examples: [
     "italianparliament amendments list --legislature 19 --limit 20",
+    "italianparliament amendments list --ddl-uri http://dati.senato.it/ddl/56260 --format jsonl",
     "italianparliament amendments list --legislature 18 --format jsonl",
   ],
   async execute(input) {
     const legFilter = input.legislature
       ? `?s osr:legislatura ${input.legislature} .`
       : "";
+    const ddlPattern = input.ddlUri
+      ? `?s osr:oggetto ?oggetto . ?oggetto osr:relativoA ?ddl . FILTER(?ddl = <${input.ddlUri}>)`
+      : `OPTIONAL { ?s osr:oggetto ?oggetto . ?oggetto osr:relativoA ?ddl }`;
 
     const query = `${OSR_PREFIXES}
-SELECT ?s ?label ?numero ?tipo ?legislatura ?url
+SELECT DISTINCT ?s ?label ?numero ?tipo ?legislatura ?ddl ?url
 WHERE {
   ?s a osr:Emendamento .
   OPTIONAL { ?s rdfs:label ?label }
@@ -47,6 +57,7 @@ WHERE {
   OPTIONAL { ?s osr:tipo ?tipo }
   OPTIONAL { ?s osr:legislatura ?legislatura }
   OPTIONAL { ?s osr:URLTesto ?url }
+  ${ddlPattern}
   ${legFilter}
 }
 LIMIT ${input.limit}
@@ -60,6 +71,7 @@ OFFSET ${input.offset}`;
       number: r.numero ?? "",
       type: r.tipo ?? "",
       legislature: r.legislatura ?? "",
+      ddl_uri: r.ddl ?? "",
       url: r.url ?? "",
     }));
     return { rows, columns };

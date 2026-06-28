@@ -26,6 +26,11 @@ Scheda di un deputato.
 Scheda di un senatore.
 - `uri` (required): URI del senatore
 
+### `person-career`
+Carriera unificata di una persona: mandati da deputato (per legislatura) + incarichi di governo + link Wikidata. Risolve doppio incarico parlamento+governo e carriera multi-legislatura.
+- `uri` (required): URI deputato o persona (Camera)
+- Camera+governo affidabile; Camera↔Senato non nei dati (solo via nome + data nascita).
+
 ## Attività legislativa — Camera
 
 ### `bills`
@@ -39,9 +44,10 @@ Scheda di un atto Camera.
 - `uri` (required): URI dell'atto
 
 ### `aic`
-Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni).
+Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni). Il testo è in `description`.
 - `legislature`: numero legislatura
 - `deputyUri`: filtra per deputato
+- `keyword`: cerca nel testo (label/titolo/description), es. un tema
 - `limit`: max risultati
 
 ### `votes`
@@ -69,8 +75,9 @@ Firmatari di un DDL Senato.
 - `uri` (required): URI del DDL
 
 ### `amendments`
-Emendamenti Senato.
+Emendamenti Senato con DDL collegato.
 - `legislature`: numero legislatura
+- `ddlUri`: filtra gli emendamenti a un DDL specifico
 
 ### `sindacato-ispettivo`
 Atti di sindacato ispettivo Senato (interrogazioni, interpellanze).
@@ -92,6 +99,11 @@ Voto del singolo senatore in una votazione.
 - `voteUri` (required): URI della votazione (da `senato-votes`)
 - `voteType`: filtro (Favorevole/Contrario/Astenuto/Presente non votante/In congedo/missione)
 - Il gruppo non è incluso: incrociare con `senator-group-members`.
+
+### `committee-sessions`
+Sedute di commissione in cui un DDL è stato trattato (iter in commissione).
+- `ddlUri` (required): URI del DDL Senato
+- Output: data, commissione, tipo seduta, n. interventi.
 
 ### `bill-text` (Camera + Senato)
 Link diretti al testo di un DDL, con tipo risorsa (`format`: html/pdf/urn) e se serve un browser (`auth`: none/browser). Il testo integrale NON è nei dati SPARQL.
@@ -143,6 +155,15 @@ Membri del governo.
 - `name`: filtra per nome
 
 ## Analisi
+
+### `group-rank`
+Classifica i gruppi Camera per AIC o DDL (via gruppo del primo firmatario), con conteggio, membri e media per membro.
+- `rankBy` (required): `aic` | `bills`
+- `legislature`: default 19
+- `order`: desc | asc
+- Colonna `count_per_member`: utile per confrontare gruppi di dimensioni diverse.
+
+Nota: i tool lista `bills`/`aic`/`votes`/`senato-votes` accettano `countOnly` (solo il totale, colonna count).
 
 ### `rank`
 Ranking parlamentari per attività.

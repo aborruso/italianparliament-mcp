@@ -32,6 +32,7 @@ See [tool reference](references/tools.md) for the full list with parameters and 
 | Cerca un parlamentare per nome | `search` |
 | Scheda deputato | `deputy` |
 | Scheda senatore | `senator` |
+| Carriera persona (legislature + governo) | `person-career` |
 | Lista deputati/senatori | `deputies` / `senators` |
 | Gruppi parlamentari Camera | `groups` / `group-members` |
 | Gruppi parlamentari Senato | `senator-group-members` |
@@ -41,6 +42,7 @@ See [tool reference](references/tools.md) for the full list with parameters and 
 | DDL di un parlamentare come primo firmatario | `member-bills` |
 | Relatori di un DDL Senato | `bill-rapporteurs` |
 | Membri di una commissione Senato | `committee-members` |
+| Sedute di commissione su un DDL Senato | `committee-sessions` |
 | Interrogazioni, interpellanze, mozioni | `aic` (Camera) / `sindacato-ispettivo` (Senato) |
 | Votazioni Camera | `votes` / `vote-detail` |
 | Votazioni Senato | `senato-votes` / `senato-vote-detail` |
@@ -53,7 +55,7 @@ See [tool reference](references/tools.md) for the full list with parameters and 
 | Incarichi parlamentari Camera | `roles` |
 | Sedute Camera | `sessions` |
 | Query SPARQL libera | `sparql` |
-| Ranking attività parlamentare | `rank` |
+| Ranking attività parlamentare | `rank` (persone) / `group-rank` (gruppi) |
 
 ### 2. Default legislature
 

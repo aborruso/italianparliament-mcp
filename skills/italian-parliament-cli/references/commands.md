@@ -46,6 +46,12 @@ Scheda di un senatore.
 italianparliament senator show --uri <uri>
 ```
 
+### `person-career show`
+Carriera unificata (legislature + governo).
+```bash
+italianparliament person-career show --uri http://dati.camera.it/ocd/deputato.rdf/d301551_15
+```
+
 ---
 
 ## Attività legislativa — Camera
@@ -61,10 +67,11 @@ italianparliament bill show --uri <uri>
 ```
 
 ### `aic list`
-Atti di indirizzo e controllo.
+Atti di indirizzo e controllo. `--keyword` cerca nel testo (label/titolo/description).
 ```bash
 italianparliament aic list --legislature 19 --limit 200 --format csv
-italianparliament aic list --deputyUri <uri>
+italianparliament aic list --legislature 19 --keyword xylella
+italianparliament aic list --deputy-uri <uri>
 ```
 
 ### `votes list`
@@ -99,8 +106,10 @@ italianparliament bill-signatories show --uri <ddl-uri>
 ```
 
 ### `amendments list`
+Emendamenti Senato; `--ddl-uri` per gli emendamenti a un DDL specifico.
 ```bash
 italianparliament amendments list --legislature 19
+italianparliament amendments list --ddl-uri http://dati.senato.it/ddl/56260 --format jsonl
 ```
 
 ### `sindacato-ispettivo list`
@@ -128,6 +137,12 @@ Voto del singolo senatore in una votazione (URI da `senato-votes`).
 ```bash
 italianparliament senato-vote-detail show --vote-uri http://dati.senato.it/votazione/19-167-42
 italianparliament senato-vote-detail show --vote-uri http://dati.senato.it/votazione/19-167-42 --vote-type Contrario
+```
+
+### `committee-sessions list`
+Sedute di commissione in cui un DDL è stato trattato.
+```bash
+italianparliament committee-sessions list --ddl-uri http://dati.senato.it/ddl/56260
 ```
 
 ### `bill-text links` (Camera + Senato)
@@ -204,6 +219,14 @@ italianparliament gov-members list --name meloni
 ---
 
 ## Analisi
+
+### `group-rank list`
+Classifica i gruppi Camera per AIC/DDL con media per membro.
+```bash
+italianparliament group-rank list --rank-by aic --legislature 19
+italianparliament group-rank list --rank-by bills --legislature 19 --limit 10
+```
+Nota: `bills`/`aic`/`votes`/`senato-votes` accettano `--count-only` (solo il totale).
 
 ### `rank list`
 Ranking parlamentari per attività.

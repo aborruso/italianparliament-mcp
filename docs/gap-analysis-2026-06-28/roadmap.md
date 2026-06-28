@@ -1,5 +1,8 @@
 # Roadmap prossimo sprint — convalida editoriale 2026-06-28
 
+> **Stato aggiornato (28 giu):** fatti — votazioni Senato (`senato-votes`/`senato-vote-detail`, v0.2.0); fix `aic --keyword`; fix `amendments --ddl-uri`; `countOnly` su bills/aic/votes/senato-votes; `group-rank` (ranking gruppi); `committee-sessions` (US-28, sedute commissione↔DDL). Rinviato — assenteismo (`vote-detail` grezzo è fuorviante: governo in testa, nessun tipo "missione"). join persona cross-namespace (US-22/US-31) via `person-career` (hub persona Camera: mandati + governo + Wikidata; Camera↔Senato resta solo via nome+data nascita). Aperti — assenteismo (rinviato), e i gap-di-dato US-19/US-29. **Il "cuore" giornalistico è coperto.**
+
+
 Giudizio del giornalista parlamentare sui gap ancora aperti, e priorità per il prossimo sprint. Distinzione chiave: **gap di dato** (assente sull'endpoint → non risolvibile lato MCP) vs **gap di tool/UX** (il dato c'è ma manca un tool/filtro → risolvibile).
 
 ## In cima: i due bug (un filtro che finge di funzionare è peggio di uno assente)

@@ -20,6 +20,10 @@ const inputSchema = z.object({
     .boolean()
     .default(false)
     .describe("Se true, solo atti di cui il deputato è primo firmatario"),
+  keyword: z
+    .string()
+    .optional()
+    .describe("Cerca nel testo/oggetto dell'atto (match case-insensitive su label, titolo e description)"),
   dateFrom: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -30,6 +34,10 @@ const inputSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
     .describe("Data fine (YYYY-MM-DD)"),
+  countOnly: z
+    .boolean()
+    .optional()
+    .describe("Se true, restituisce solo il numero totale di risultati (colonna count)"),
   limit: z.number().int().min(1).max(1000).default(100),
   offset: z.number().int().min(0).default(0),
 });
@@ -55,6 +63,7 @@ export const aicTool: Tool<typeof inputSchema> = {
   inputSchema,
   examples: [
     "italianparliament aic list --legislature 19 --limit 10",
+    "italianparliament aic list --legislature 19 --keyword xylella",
     "italianparliament aic list --deputy-uri http://dati.camera.it/ocd/deputato.rdf/d306921_17 --primary-only",
     "italianparliament aic list --legislature 19 --date-from 2026-01-01 --limit 50",
     "italianparliament aic list --legislature 19 --date-from 2026-01-01 --date-to 2026-03-31 --format jsonl",
@@ -86,9 +95,14 @@ export const aicTool: Tool<typeof inputSchema> = {
     const dateToFilter = input.dateTo
       ? `FILTER(?date <= "${input.dateTo.replace(/-/g, "")}")`
       : "";
+    const keywordEsc = input.keyword !== undefined
+      ? input.keyword.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+      : "";
+    const keywordFilter = input.keyword !== undefined
+      ? `FILTER(CONTAINS(LCASE(COALESCE(STR(?label), "")), LCASE("${keywordEsc}")) || CONTAINS(LCASE(COALESCE(STR(?title), "")), LCASE("${keywordEsc}")) || CONTAINS(LCASE(COALESCE(STR(?description), "")), LCASE("${keywordEsc}")))`
+      : "";
 
-    const query = `${OCD_PREFIXES}
-SELECT DISTINCT ?s ?label ?title ?type ?date ?identifier ?sponsor_uri ?rif_leg ?description ?url
+    const coreSelect = `SELECT DISTINCT ?s ?label ?title ?type ?date ?identifier ?sponsor_uri ?rif_leg ?description ?url
 WHERE {
   ?s a ocd:aic .
   ?s rdfs:label ?label .
@@ -103,12 +117,18 @@ WHERE {
   ${legFilter}
   ${dateFromFilter}
   ${dateToFilter}
-}
-ORDER BY DESC(?date)
-LIMIT ${input.limit}
-OFFSET ${input.offset}`;
+  ${keywordFilter}
+}`;
+
+    const query = input.countOnly
+      ? `${OCD_PREFIXES}\nSELECT (COUNT(*) AS ?count) WHERE {\n${coreSelect}\n}`
+      : `${OCD_PREFIXES}\n${coreSelect}\nORDER BY DESC(?date)\nLIMIT ${input.limit}\nOFFSET ${input.offset}`;
 
     const results = await cdQuery(query);
+    if (input.countOnly) {
+      const c = flattenBindings(results)[0]?.count ?? "0";
+      return { rows: [{ count: c }], columns: ["count"] };
+    }
     const raw = flattenBindings(results);
     const rows = raw.map((r) => {
       const uri = r.s ?? "";

@@ -26,6 +26,10 @@ const inputSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
     .describe("Data fine seduta (YYYY-MM-DD)"),
+  countOnly: z
+    .boolean()
+    .optional()
+    .describe("Se true, restituisce solo il numero totale di votazioni (colonna count)"),
   limit: z.number().int().positive().max(1000).default(100),
   offset: z.number().int().nonnegative().default(0),
 });
@@ -68,8 +72,7 @@ export const senatoVotesTool: Tool<typeof inputSchema> = {
       ? `FILTER(?date <= "${input.dateTo}"^^xsd:date)`
       : "";
 
-    const query = `${OSR_PREFIXES}
-SELECT DISTINCT ?v ?date ?numero ?tipo ?label ?esito
+    const coreSelect = `SELECT DISTINCT ?v ?date ?numero ?tipo ?label ?esito
                 ?favorevoli ?contrari ?astenuti ?presenti ?votanti ?maggioranza
                 ?ddl ?oggetto
 WHERE {
@@ -88,12 +91,25 @@ WHERE {
   ${ddlPattern}
   ${dateFromFilter}
   ${dateToFilter}
-}
-ORDER BY DESC(?date) DESC(?numero)
-LIMIT ${input.limit}
-OFFSET ${input.offset}`;
+}`;
+
+    // Count minimale (solo pattern vincolanti): il wrap dell'intero SELECT con
+    // gli OPTIONAL su ~64k votazioni manda Virtuoso in timeout.
+    const countWhere = [`?v a osr:Votazione ; osr:legislatura ${input.legislature} .`];
+    if (input.ddlUri)
+      countWhere.push(`?v osr:oggetto ?oggetto . ?oggetto osr:relativoA ?ddl . FILTER(?ddl = <${input.ddlUri}>)`);
+    if (input.dateFrom || input.dateTo)
+      countWhere.push(`?v osr:seduta ?sed . ?sed osr:dataSeduta ?date . ${dateFromFilter} ${dateToFilter}`);
+
+    const query = input.countOnly
+      ? `${OSR_PREFIXES}\nSELECT (COUNT(DISTINCT ?v) AS ?count) WHERE {\n${countWhere.join("\n  ")}\n}`
+      : `${OSR_PREFIXES}\n${coreSelect}\nORDER BY DESC(?date) DESC(?numero)\nLIMIT ${input.limit}\nOFFSET ${input.offset}`;
 
     const results = await snQuery(query);
+    if (input.countOnly) {
+      const c = flattenBindings(results)[0]?.count ?? "0";
+      return { rows: [{ count: c }], columns: ["count"] };
+    }
     const raw = flattenBindings(results);
     // Un voto su DDL unificati è collegato a più ddl via osr:relativoA:
     // il join moltiplica le righe. Collassiamo per URI votazione e

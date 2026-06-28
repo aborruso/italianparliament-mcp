@@ -30,6 +30,9 @@ import { memberBillsTool } from "./member-bills.js";
 import { billTextTool } from "./bill-text.js";
 import { senatoVotesTool } from "./senato-votes.js";
 import { senatoVoteDetailTool } from "./senato-vote-detail.js";
+import { groupRankTool } from "./group-rank.js";
+import { committeeSessionsTool } from "./committee-sessions.js";
+import { personCareerTool } from "./person-career.js";
 import type { Tool } from "./types.js";
 
 export const tools: Tool[] = [
@@ -65,6 +68,9 @@ export const tools: Tool[] = [
   billTextTool,
   senatoVotesTool,
   senatoVoteDetailTool,
+  groupRankTool,
+  committeeSessionsTool,
+  personCareerTool,
 ];
 
 export const toolsByName: Record<string, Tool> = Object.fromEntries(
@@ -104,5 +110,8 @@ export {
   billTextTool,
   senatoVotesTool,
   senatoVoteDetailTool,
+  groupRankTool,
+  committeeSessionsTool,
+  personCareerTool,
 };
 export type { Tool, ToolResult } from "./types.js";

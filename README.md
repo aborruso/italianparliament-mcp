@@ -21,6 +21,7 @@ Usabile in tre modi:
 | `search find` | Cerca un parlamentare per nome in Camera, Senato o entrambi |
 | `deputy show` | Scheda di un deputato: nome, genere, data/luogo nascita, lista elezione, data elezione, convalida, commissioni |
 | `senator show` | Scheda di un senatore: nome, genere, data/luogo nascita, regione elezione, tipo elezione, data mandato |
+| `person-career show` | Carriera unificata di una persona: tutti i mandati da deputato (per legislatura) e gli incarichi di governo, con link Wikidata. Risolve doppio incarico parlamento+governo e carriera multi-legislatura |
 
 ### Attivita legislativa — Camera
 
@@ -29,7 +30,7 @@ Usabile in tre modi:
 | `bills list` | Disegni di legge Camera, filtrabile per legislatura, tipo, data (`--date-from`/`--date-to`) |
 | `bill show` | Scheda di un atto Camera (titolo, tipo, data, iniziativa, primo firmatario, cofirmatari) |
 | `member-bills list` | DDL presentati come primo firmatario da un deputato o senatore (Camera e Senato) |
-| `aic list` | Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni), filtrabile per data |
+| `aic list` | Atti di indirizzo e controllo (interrogazioni, interpellanze, mozioni), filtrabile per data e per parola chiave nel testo (`--keyword`) |
 | `votes list` | Votazioni Camera con contatori (favorevoli, contrari, astenuti), filtrabile per data, tipo fiducia (`--confidence-vote`), DDL collegato (`--bill-code`) |
 | `vote-detail show` | Come ha votato ogni singolo deputato in una votazione, con nome e gruppo |
 | `bill-rapporteurs list` | Relatori di un DDL Camera per commissione, con tipo (Relatore / Relatore f.f.) e data |
@@ -41,11 +42,12 @@ Usabile in tre modi:
 |---------|---------|
 | `bill-progress list` | Iter dei DDL al Senato: stato, date, iniziativa, natura |
 | `bill-signatories show` | Firmatari di un DDL: primo firmatario e cofirmatari |
-| `amendments list` | Emendamenti al Senato con link al testo |
+| `amendments list` | Emendamenti al Senato con numero, tipo, DDL collegato e link al testo. Filtrabile per legislatura e per DDL (`--ddl-uri`) |
 | `documents list` | Documenti parlamentari: atti del governo, atti UE, relazioni Corte dei Conti |
 | `sindacato-ispettivo list` | Atti di sindacato ispettivo Senato (interrogazioni, interpellanze, mozioni), filtrabile per data |
 | `senato-votes list` | Votazioni d'Assemblea del Senato con esito, contatori (favorevoli/contrari/astenuti), tipo, data e DDL collegato. Filtrabile per legislatura, data, DDL |
 | `senato-vote-detail show` | Come ha votato ogni singolo senatore in una votazione (favorevole/contrario/astenuto/presente non votante/in congedo) |
+| `committee-sessions list` | Sedute di commissione in cui un DDL è stato trattato, con data, commissione, tipo seduta e numero di interventi (l'iter del provvedimento nelle commissioni) |
 
 ### Testo dei disegni di legge
 
@@ -73,7 +75,12 @@ Il testo integrale di un DDL non è nei dati aperti SPARQL (solo metadati). Ques
 | Comando | Cosa fa |
 |---------|---------|
 | `rank list` | Classifiche di attività parlamentare (`--rank-by`: aic-primo-firmatario, aic-co-firmatario, bills-primo-firmatario, bills-co-firmatario, speeches) |
+| `group-rank list` | Classifica dei gruppi Camera per AIC o DDL (primo firmatario), con conteggio, numero membri e media per membro |
 | `sparql query` | Query SPARQL libera contro l'endpoint Camera o Senato (per dati non coperti dagli altri comandi) |
+
+I comandi `bills`, `aic`, `votes` e `senato-votes` accettano `--count-only` per ottenere solo il numero totale (utile per confronti fra legislature senza scaricare le righe).
+
+**Scoperta dei comandi**: `italianparliament guide` stampa il flusso tipico (scoperta → URI → dettaglio); `italianparliament which "<capacità>"` trova il comando giusto (es. `which "testo ddl"`); `<comando> --help` mostra opzioni ed esempi.
 
 ### Contesto istituzionale
 
@@ -151,6 +158,30 @@ Quali interrogazioni sono state presentate questo mese?
 italianparliament aic list --legislature 19 --date-from 2026-04-01
 ```
 
+Quante interrogazioni parlano di un tema (es. xylella)?
+
+```
+italianparliament aic list --legislature 19 --keyword xylella
+```
+
+Quale gruppo presenta più interrogazioni, anche rapportato ai suoi membri?
+
+```
+italianparliament group-rank list --rank-by aic --legislature 19
+```
+
+Quanti emendamenti ha avuto un DDL al Senato?
+
+```
+italianparliament amendments list --ddl-uri http://dati.senato.it/ddl/56260 --limit 1000 --format jsonl | wc -l
+```
+
+In quali sedute di commissione è passato un DDL?
+
+```
+italianparliament committee-sessions list --ddl-uri http://dati.senato.it/ddl/56260
+```
+
 Quali interrogazioni al Senato questa settimana?
 
 ```
@@ -217,6 +248,12 @@ Quali interventi in aula ci sono stati nella XIX legislatura?
 italianparliament speeches list --legislature 19 --limit 20
 ```
 
+Qual è la carriera completa di un parlamentare (legislature + governo)?
+
+```
+italianparliament person-career show --uri http://dati.camera.it/ocd/deputato.rdf/d301551_15
+```
+
 Cerca "schlein" in entrambe le camere:
 
 ```
@@ -245,7 +282,7 @@ italianparliament member-bills list --member-uri http://dati.camera.it/ocd/deput
 
 ## Stato
 
-33 tool implementati. Vedi `LOG.md` per il diario di avanzamento e `RELEASING.md` per il processo di rilascio.
+36 tool implementati. Vedi `LOG.md` per il diario di avanzamento e `RELEASING.md` per il processo di rilascio.
 
 ## Licenza
 

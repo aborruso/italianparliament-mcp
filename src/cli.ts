@@ -32,9 +32,13 @@ import { memberBillsTool } from "./tools/member-bills.js";
 import { billTextTool } from "./tools/bill-text.js";
 import { senatoVotesTool } from "./tools/senato-votes.js";
 import { senatoVoteDetailTool } from "./tools/senato-vote-detail.js";
+import { groupRankTool } from "./tools/group-rank.js";
+import { committeeSessionsTool } from "./tools/committee-sessions.js";
+import { personCareerTool } from "./tools/person-career.js";
 import { fetchSenatoText } from "./core/fetch-text.js";
 import { formatRows, type Format } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
+import { ZodError } from "zod";
 import type { ToolResult } from "./tools/types.js";
 
 function withExamples(description: string, examples: string[]): string {
@@ -43,6 +47,29 @@ function withExamples(description: string, examples: string[]): string {
 
 function emit(result: ToolResult, format: Format): void {
   process.stdout.write(formatRows(result.rows, format, result.columns) + "\n");
+}
+
+// Valida l'input con lo schema Zod del tool PRIMA di eseguirlo: così gli enum
+// errati (--vote-type, --rank-by, ...) producono un ZodError con i valori validi
+// invece di scivolare nella query come stringa.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function runTool(tool: { inputSchema: { parse(i: unknown): any }; execute(i: any): Promise<ToolResult> }, input: unknown): Promise<ToolResult> {
+  let parsed: unknown;
+  try {
+    parsed = tool.inputSchema.parse(input);
+  } catch (e) {
+    if (e instanceof ZodError) {
+      const msgs = e.issues.map((i) => {
+        const field = i.path.join(".") || "input";
+        return i.code === "invalid_enum_value"
+          ? `--${field}: valore non valido "${(i as { received?: string }).received ?? ""}". Ammessi: ${i.options.join(" | ")}.`
+          : `--${field}: ${i.message}`;
+      });
+      throw new Error(msgs.join("\n"));
+    }
+    throw e;
+  }
+  return tool.execute(parsed);
 }
 
 function parseFormat(raw: string): Format {
@@ -97,7 +124,7 @@ const deputiesList = defineCommand({
     },
   },
   async run({ args }) {
-    const result = await deputiesTool.execute({
+    const result = await runTool(deputiesTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       region: (args.region as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
@@ -143,7 +170,7 @@ const senatorsList = defineCommand({
   },
   async run({ args }) {
     const activeOnlyRaw = args["active-only"];
-    const result = await senatorsTool.execute({
+    const result = await runTool(senatorsTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       activeOnly:
         activeOnlyRaw === undefined ? undefined : Boolean(activeOnlyRaw),
@@ -180,10 +207,12 @@ const billsList = defineCommand({
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
     limit: { type: "string", default: "100" },
     offset: { type: "string", default: "0" },
+    "count-only": { type: "boolean", description: "Return only the total count (column count)" },
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await billsTool.execute({
+    const result = await runTool(billsTool, {
+      countOnly: args["count-only"] === true,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       type: (args.type as string) || undefined,
       initiative: (args.initiative as string) || undefined,
@@ -222,6 +251,7 @@ const votesList = defineCommand({
     "date-from": { type: "string", description: "Start date YYYY-MM-DD" },
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
     "bill-code": { type: "string", description: "Filter votes by bill number (e.g. '2807', '1665')" },
+    "count-only": { type: "boolean", description: "Return only the total count (column count)" },
     limit: { type: "string", default: "100" },
     offset: { type: "string", default: "0" },
     format: { type: "string", default: "csv" },
@@ -245,7 +275,8 @@ const votesList = defineCommand({
           `Invalid --confidence-vote value "${args["confidence-vote"]}". Expected: true or false.`,
         );
     }
-    const result = await votesTool.execute({
+    const result = await runTool(votesTool, {
+      countOnly: args["count-only"] === true,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       approved,
       confidenceVote,
@@ -295,7 +326,7 @@ const searchFind = defineCommand({
       );
     }
     const activeOnlyRaw = args["active-only"];
-    const result = await searchTool.execute({
+    const result = await runTool(searchTool, {
       name: args.name as string,
       chamber,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
@@ -319,7 +350,7 @@ const legislaturesList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await legislaturesTool.execute({});
+    const result = await runTool(legislaturesTool, {});
     emit(result, parseFormat(args.format as string));
   },
 });
@@ -338,7 +369,7 @@ const groupsList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await groupsTool.execute({
+    const result = await runTool(groupsTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
     });
@@ -363,7 +394,7 @@ const sessionsList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await sessionsTool.execute({
+    const result = await runTool(sessionsTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       dateFrom: (args["date-from"] as string) || undefined,
       dateTo: (args["date-to"] as string) || undefined,
@@ -389,7 +420,7 @@ const governmentsList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await governmentsTool.execute({
+    const result = await runTool(governmentsTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
       offset: Number(args.offset ?? 0),
@@ -413,7 +444,7 @@ const deputyShow = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await deputyTool.execute({
+    const result = await runTool(deputyTool, {
       uri: (args.uri as string) || undefined,
       id: parseIntFlag(args.id as string, "id"),
       legislature: parseIntFlag(args.legislature as string, "legislature"),
@@ -436,7 +467,7 @@ const senatorShow = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await senatorTool.execute({
+    const result = await runTool(senatorTool, {
       uri: args.uri as string,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
     });
@@ -457,7 +488,7 @@ const billShow = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await billTool.execute({ uri: args.uri as string });
+    const result = await runTool(billTool, { uri: args.uri as string });
     emit(result, parseFormat(args.format as string));
   },
 });
@@ -479,7 +510,7 @@ const rolesList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await rolesTool.execute({
+    const result = await runTool(rolesTool, {
       deputyUri: (args["deputy-uri"] as string) || undefined,
       groupUri: (args["group-uri"] as string) || undefined,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
@@ -519,7 +550,7 @@ const speechesList = defineCommand({
   },
   async run({ args }) {
     const chamber = (args.chamber as string) === "senato" ? "senato" : "camera";
-    const result = await speechesTool.execute({
+    const result = await runTool(speechesTool, {
       chamber,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       deputyUri: (args["deputy-uri"] as string) || undefined,
@@ -543,17 +574,21 @@ const aicList = defineCommand({
     legislature: { type: "string", description: "Legislature number" },
     "deputy-uri": { type: "string", description: "Full URI of a deputy (signatory)" },
     "primary-only": { type: "boolean", description: "Only primary signatory matches" },
+    keyword: { type: "string", description: "Search in the act text/object (label, title, description)" },
     "date-from": { type: "string", description: "Start date YYYY-MM-DD" },
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
+    "count-only": { type: "boolean", description: "Return only the total count (column count)" },
     limit: { type: "string", default: "100" },
     offset: { type: "string", default: "0" },
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await aicTool.execute({
+    const result = await runTool(aicTool, {
+      countOnly: args["count-only"] === true,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       deputyUri: (args["deputy-uri"] as string) || undefined,
       primaryOnly: args["primary-only"] === true,
+      keyword: (args.keyword as string) || undefined,
       dateFrom: (args["date-from"] as string) || undefined,
       dateTo: (args["date-to"] as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
@@ -579,7 +614,7 @@ const voteDetailShow = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await voteDetailTool.execute({
+    const result = await runTool(voteDetailTool, {
       voteUri: args["vote-uri"] as string,
       groupAcronym: args["group-acronym"] as string | undefined,
       voteType: args["vote-type"] as "Favorevole" | "Contrario" | "Astenuto" | "Non ha votato" | undefined,
@@ -606,7 +641,7 @@ const groupMembersList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await groupMembersTool.execute({
+    const result = await runTool(groupMembersTool, {
       groupUri: (args["group-uri"] as string) || undefined,
       deputyUri: (args["deputy-uri"] as string) || undefined,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
@@ -634,7 +669,7 @@ const senatorGroupMembersList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await senatorGroupMembersTool.execute({
+    const result = await runTool(senatorGroupMembersTool, {
       groupUri: (args["group-uri"] as string) || undefined,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       asOf: (args["as-of"] as string) || undefined,
@@ -662,7 +697,7 @@ const govMembersList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await govMembersTool.execute({
+    const result = await runTool(govMembersTool, {
       governmentUri: (args["government-uri"] as string) || undefined,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       name: (args.name as string) || undefined,
@@ -687,7 +722,7 @@ const committeesList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await committeesTool.execute({
+    const result = await runTool(committeesTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       limit: parseIntFlag(args.limit as string, "limit") ?? 300,
     });
@@ -723,7 +758,7 @@ const billProgressList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await billProgressTool.execute({
+    const result = await runTool(billProgressTool, {
       ddlUri: (args["ddl-uri"] as string) || undefined,
       keyword: (args.keyword as string) || undefined,
       dateFrom: (args["date-from"] as string) || undefined,
@@ -750,7 +785,7 @@ const billSignatoriesShow = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await billSignatoriesTool.execute({
+    const result = await runTool(billSignatoriesTool, {
       ddlUri: args["ddl-uri"] as string,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
     });
@@ -772,7 +807,7 @@ const billRapporteursList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await billRapporteursTool.execute({
+    const result = await runTool(billRapporteursTool, {
       billUri: args["bill-uri"] as string,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
     });
@@ -790,13 +825,15 @@ const amendmentsList = defineCommand({
   },
   args: {
     legislature: { type: "string", description: "Legislature number" },
+    "ddl-uri": { type: "string", description: "Filter amendments to a specific bill (Senato ddl URI)" },
     limit: { type: "string", default: "100" },
     offset: { type: "string", default: "0" },
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await amendmentsTool.execute({
+    const result = await runTool(amendmentsTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
+      ddlUri: (args["ddl-uri"] as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
       offset: Number(args.offset ?? 0),
     });
@@ -843,7 +880,7 @@ const rankList = defineCommand({
     if (orderArg !== "desc" && orderArg !== "asc") {
       throw new Error(`Invalid --order "${orderArg}". Expected: desc or asc.`);
     }
-    const result = await rankTool.execute({
+    const result = await runTool(rankTool, {
       rankBy: rankBy as Parameters<typeof rankTool.execute>[0]["rankBy"],
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       order: orderArg as "desc" | "asc",
@@ -873,7 +910,7 @@ const sindacatoIspettivoList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await sindacatoIspettivoTool.execute({
+    const result = await runTool(sindacatoIspettivoTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       senatorUri: (args["senator-uri"] as string) || undefined,
       tipo: (args.tipo as string) || undefined,
@@ -909,7 +946,7 @@ const committeeMembersList = defineCommand({
     if (!["camera", "senato", "both"].includes(chamber)) {
       throw new Error(`Invalid --chamber "${chamber}". Expected: camera, senato, both.`);
     }
-    const result = await committeeMembersTool.execute({
+    const result = await runTool(committeeMembersTool, {
       chamber: chamber as "camera" | "senato" | "both",
       committeeUri: (args["committee-uri"] as string) || undefined,
       memberUri: (args["member-uri"] as string) || undefined,
@@ -938,7 +975,7 @@ const memberBillsList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await memberBillsTool.execute({
+    const result = await runTool(memberBillsTool, {
       memberUri: args["member-uri"] as string,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
@@ -967,7 +1004,7 @@ const sparqlQuery = defineCommand({
     if (endpoint !== "camera" && endpoint !== "senato") {
       throw new Error('Invalid --endpoint. Allowed: camera, senato.');
     }
-    const result = await sparqlTool.execute({
+    const result = await runTool(sparqlTool, {
       query: args.query as string,
       endpoint,
       limit: parseIntFlag(args.limit as string, "limit") ?? 25,
@@ -992,11 +1029,79 @@ const documentsList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await documentsTool.execute({
+    const result = await runTool(documentsTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       type: (args.type as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
       offset: Number(args.offset ?? 0),
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
+const personCareerShow = defineCommand({
+  meta: {
+    name: "show",
+    description: withExamples(
+      "Show a person's unified career across legislatures and government (Camera persona hub).",
+      personCareerTool.examples,
+    ),
+  },
+  args: {
+    uri: { type: "string", description: "Deputy or persona URI (Camera)", required: true },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await runTool(personCareerTool, { uri: args.uri as string });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
+const committeeSessionsList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "List Senato committee sessions where a bill was discussed.",
+      committeeSessionsTool.examples,
+    ),
+  },
+  args: {
+    "ddl-uri": { type: "string", description: "Senato ddl URI", required: true },
+    limit: { type: "string", default: "200" },
+    offset: { type: "string", default: "0" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await runTool(committeeSessionsTool, {
+      ddlUri: args["ddl-uri"] as string,
+      limit: parseIntFlag(args.limit as string, "limit") ?? 200,
+      offset: Number(args.offset ?? 0),
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
+const groupRankList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "Rank Camera parliamentary groups by activity (AIC or bills), with per-member average.",
+      groupRankTool.examples,
+    ),
+  },
+  args: {
+    "rank-by": { type: "string", description: "aic | bills", required: true },
+    legislature: { type: "string", description: "Legislature number (default 19)", default: "19" },
+    order: { type: "string", description: "desc | asc (default desc)", default: "desc" },
+    limit: { type: "string", default: "20" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await runTool(groupRankTool, {
+      rankBy: args["rank-by"] as "aic" | "bills",
+      legislature: parseIntFlag(args.legislature as string, "legislature") ?? 19,
+      order: (args.order as "desc" | "asc") ?? "desc",
+      limit: parseIntFlag(args.limit as string, "limit") ?? 20,
     });
     emit(result, parseFormat(args.format as string));
   },
@@ -1015,12 +1120,14 @@ const senatoVotesList = defineCommand({
     "ddl-uri": { type: "string", description: "Filter votes linked to a bill (Senato ddl URI)" },
     "date-from": { type: "string", description: "Session date from (YYYY-MM-DD)" },
     "date-to": { type: "string", description: "Session date to (YYYY-MM-DD)" },
+    "count-only": { type: "boolean", description: "Return only the total count (column count)" },
     limit: { type: "string", default: "100" },
     offset: { type: "string", default: "0" },
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await senatoVotesTool.execute({
+    const result = await runTool(senatoVotesTool, {
+      countOnly: args["count-only"] === true,
       legislature: parseIntFlag(args.legislature as string, "legislature") ?? 19,
       ddlUri: (args["ddl-uri"] as string) || undefined,
       dateFrom: (args["date-from"] as string) || undefined,
@@ -1049,7 +1156,7 @@ const senatoVoteDetailShow = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await senatoVoteDetailTool.execute({
+    const result = await runTool(senatoVoteDetailTool, {
       voteUri: args["vote-uri"] as string,
       voteType: (args["vote-type"] as string) || undefined,
     } as Parameters<typeof senatoVoteDetailTool.execute>[0]);
@@ -1070,7 +1177,7 @@ const billTextLinks = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
-    const result = await billTextTool.execute({ uri: args.uri as string });
+    const result = await runTool(billTextTool, { uri: args.uri as string });
     emit(result, parseFormat(args.format as string));
   },
 });
@@ -1124,6 +1231,111 @@ const billTextFetch = defineCommand({
     } else {
       process.stdout.write(result.markdown + "\n");
     }
+  },
+});
+
+const GUIDE_TEXT = `italianparliament — guida all'orchestrazione
+
+FLUSSO TIPICO (le schede di dettaglio richiedono un URI, ottenuto da un comando di lista/ricerca):
+  1. Scoperta:
+     - persone:        search find --name <nome>            (Camera+Senato, restituisce URI)
+     - gruppi:         groups list --legislature 19          (Camera)  /  senator-group-members list (Senato)
+     - legislature:    legislatures list
+     - governi:        governments list
+  2. Dettaglio (con l'URI ottenuto sopra):
+     - persona:        deputy/senator show --uri ...  |  person-career show --uri ... (legislature + governo)
+     - gruppo:         group-members list --group-uri ...
+  3. Catene utili:
+     - votazioni Camera:  votes list ... → vote-detail show --vote-uri ...
+     - votazioni Senato:  senato-votes list ... → senato-vote-detail show --vote-uri ...
+     - DDL Senato:        bill-progress list --keyword ... → amendments / committee-sessions / bill-text (--ddl-uri o ddl URI)
+     - testo DDL:         bill-text links --uri <ddl> (poi, Senato dietro WAF: bill-text fetch --did <N>)
+
+OPZIONI TRASVERSALI:
+  --format csv|jsonl     formato output (default csv)
+  --count-only           solo il totale (su bills/aic/votes/senato-votes), per confronti senza scaricare le righe
+  --legislature 19       legislatura corrente (default dove applicabile)
+
+SCOPERTA COMANDI:
+  italianparliament which <capacità>     trova il comando per una capacità (es. which "testo ddl")
+  italianparliament <comando> --help     mostra opzioni ed esempi copiabili
+`;
+
+const CAPABILITIES: { cmd: string; terms: string[]; desc: string }[] = [
+  { cmd: "search find", terms: ["cerca", "nome", "parlamentare", "trova persona", "search"], desc: "Cerca un parlamentare per nome (Camera+Senato)" },
+  { cmd: "person-career show", terms: ["carriera", "governo", "ministro", "doppio incarico", "legislature", "wikidata"], desc: "Carriera unificata di una persona (mandati + governo)" },
+  { cmd: "deputy show / senator show", terms: ["scheda", "deputato", "senatore", "anagrafica", "nascita"], desc: "Scheda di un parlamentare" },
+  { cmd: "bills list / bill show", terms: ["disegno di legge", "ddl camera", "proposta di legge", "atti"], desc: "Disegni di legge Camera" },
+  { cmd: "bill-progress list", terms: ["iter", "ddl senato", "stato ddl"], desc: "Iter dei DDL al Senato" },
+  { cmd: "bill-text links / fetch", terms: ["testo", "articolato", "pdf", "testo ddl", "contenuto legge"], desc: "Link al testo di un DDL e download/conversione (Senato)" },
+  { cmd: "amendments list", terms: ["emendamenti", "ostruzionismo"], desc: "Emendamenti Senato (--ddl-uri per un DDL)" },
+  { cmd: "committee-sessions list", terms: ["commissione", "sedute", "lavori commissione"], desc: "Sedute di commissione su un DDL (Senato)" },
+  { cmd: "votes list / vote-detail show", terms: ["votazione", "voto", "come ha votato", "fiducia", "camera"], desc: "Votazioni Camera e voto individuale" },
+  { cmd: "senato-votes list / senato-vote-detail show", terms: ["votazione senato", "voto senatore", "ribelli senato"], desc: "Votazioni Senato e voto individuale" },
+  { cmd: "aic list", terms: ["interrogazione", "interpellanza", "mozione", "sindacato ispettivo camera", "tema"], desc: "Atti di indirizzo e controllo Camera (--keyword)" },
+  { cmd: "sindacato-ispettivo list", terms: ["interrogazione senato", "interpellanza senato"], desc: "Sindacato ispettivo Senato" },
+  { cmd: "groups list / group-members list", terms: ["gruppo", "gruppi", "composizione gruppo"], desc: "Gruppi parlamentari Camera" },
+  { cmd: "rank list / group-rank list", terms: ["classifica", "ranking", "più attivi", "top", "per gruppo"], desc: "Classifiche per persona o per gruppo" },
+  { cmd: "gov-members list", terms: ["ministro", "governo", "sottosegretario", "rimpasto"], desc: "Membri del governo" },
+  { cmd: "committees list / committee-members list", terms: ["commissioni", "membri commissione"], desc: "Commissioni Senato e loro membri" },
+  { cmd: "speeches list", terms: ["intervento", "discorso", "aula"], desc: "Interventi in aula" },
+  { cmd: "sparql query", terms: ["sparql", "query libera", "dato non coperto"], desc: "Query SPARQL libera (ultima risorsa)" },
+];
+
+const guideCmd = defineCommand({
+  meta: { name: "guide", description: "Print the recommended workflow for orchestrating the CLI step by step" },
+  run() {
+    process.stdout.write(GUIDE_TEXT);
+  },
+});
+
+function capabilityScore(cap: { cmd: string; terms: string[]; desc: string }, q: string): number {
+  let s = 0;
+  for (const t of cap.terms) {
+    if (t === q) s = Math.max(s, 100);
+    else if (t.includes(q)) s = Math.max(s, 70);
+    else if (q.includes(t)) s = Math.max(s, 60);
+  }
+  if (cap.cmd.toLowerCase().includes(q)) s = Math.max(s, 50);
+  if (cap.desc.toLowerCase().includes(q)) s = Math.max(s, 40);
+  return s;
+}
+
+const whichCmd = defineCommand({
+  meta: {
+    name: "which",
+    description: withExamples(
+      "Find the command(s) that implement a capability. Ranked by relevance; exit code 0 if a match is found, 2 otherwise.",
+      [
+        'italianparliament which "testo ddl"',
+        "italianparliament which votazione",
+        'italianparliament which carriera --json',
+      ],
+    ),
+  },
+  args: {
+    capability: { type: "positional", description: "Capability to look up (e.g. 'testo ddl')", required: true },
+    json: { type: "boolean", description: "Output ranked JSON [{command, score, description}]", default: false },
+  },
+  run({ args }) {
+    const q = String(args.capability ?? "").toLowerCase().trim();
+    const ranked = CAPABILITIES.map((c) => ({ command: c.cmd, score: capabilityScore(c, q), description: c.desc }))
+      .filter((c) => c.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    if (args.json) {
+      process.stdout.write(JSON.stringify(ranked) + "\n");
+    } else if (ranked.length === 0) {
+      process.stdout.write(
+        `Nessun comando trovato per "${q}". Prova 'italianparliament guide' per il flusso completo, o '--help'.\n`,
+      );
+    } else {
+      for (const m of ranked) {
+        process.stdout.write(`${m.command}\n  ${m.description}\n`);
+      }
+    }
+    // Confidenza via exit code: 0 = match trovato, 2 = nessun match.
+    process.exit(ranked.length > 0 ? 0 : 2);
   },
 });
 
@@ -1267,6 +1479,20 @@ const main = defineCommand({
       meta: { name: "senato-vote-detail", description: "How each senator voted in a single Senato vote" },
       subCommands: { show: senatoVoteDetailShow },
     }),
+    "group-rank": defineCommand({
+      meta: { name: "group-rank", description: "Rank Camera groups by activity (AIC/bills) with per-member average" },
+      subCommands: { list: groupRankList },
+    }),
+    "committee-sessions": defineCommand({
+      meta: { name: "committee-sessions", description: "Senato committee sessions where a bill was discussed" },
+      subCommands: { list: committeeSessionsList },
+    }),
+    "person-career": defineCommand({
+      meta: { name: "person-career", description: "A person's unified career across legislatures and government" },
+      subCommands: { show: personCareerShow },
+    }),
+    guide: guideCmd,
+    which: whichCmd,
   },
 });
 
@@ -1282,7 +1508,17 @@ process.stderr.write = ((chunk: unknown, ...rest: unknown[]) => {
 }) as typeof process.stderr.write;
 
 runMain(main).catch((err: unknown) => {
-  if (err instanceof SparqlError) {
+  if (err instanceof ZodError) {
+    // Errori di validazione input: per gli enum, elenca i valori validi.
+    const msgs = err.issues.map((i) => {
+      const field = i.path.join(".") || "input";
+      if (i.code === "invalid_enum_value") {
+        return `--${field}: valore non valido. Ammessi: ${i.options.join(" | ")}.`;
+      }
+      return `--${field}: ${i.message}`;
+    });
+    process.stderr.write(`Error: ${msgs.join("\n")}\n`);
+  } else if (err instanceof SparqlError) {
     process.stderr.write(
       `Error: ${err.message}\nEndpoint: ${err.endpoint}\n${err.status ? `Status: ${err.status}\n` : ""}`,
     );

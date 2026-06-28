@@ -34,6 +34,10 @@ const inputSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
     .describe("Data fine (YYYY-MM-DD)"),
+  countOnly: z
+    .boolean()
+    .optional()
+    .describe("Se true, restituisce solo il numero totale di risultati (colonna count), utile per confronti senza scaricare le righe"),
   limit: z.number().int().positive().max(1000).default(100),
   offset: z.number().int().nonnegative().default(0),
 });
@@ -95,8 +99,7 @@ export const billsTool: Tool<typeof inputSchema> = {
       ? `FILTER(?date <= "${input.dateTo.replace(/-/g, "")}")`
       : "";
 
-    const query = `${OCD_PREFIXES}
-SELECT DISTINCT ?s ?label ?title ?type ?date ?description
+    const coreSelect = `SELECT DISTINCT ?s ?label ?title ?type ?date ?description
                 ?initiative ?identifier ?rif_leg ?sponsor_uri ?url
 WHERE {
   ?s a <http://dati.camera.it/ocd/atto> .
@@ -116,12 +119,17 @@ WHERE {
   ${initiativeFilter}
   ${dateFromFilter}
   ${dateToFilter}
-}
-ORDER BY DESC(?date)
-LIMIT ${input.limit}
-OFFSET ${input.offset}`;
+}`;
+
+    const query = input.countOnly
+      ? `${OCD_PREFIXES}\nSELECT (COUNT(*) AS ?count) WHERE {\n${coreSelect}\n}`
+      : `${OCD_PREFIXES}\n${coreSelect}\nORDER BY DESC(?date)\nLIMIT ${input.limit}\nOFFSET ${input.offset}`;
 
     const results = await cdQuery(query);
+    if (input.countOnly) {
+      const c = flattenBindings(results)[0]?.count ?? "0";
+      return { rows: [{ count: c }], columns: ["count"] };
+    }
     const raw = flattenBindings(results);
     const rows = raw.map((r) => {
       const { s, rif_leg, ...rest } = r;
