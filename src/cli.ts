@@ -947,7 +947,7 @@ const sindacatoIspettivoList = defineCommand({
       keyword: (args.keyword as string) || undefined,
       dateFrom: (args["date-from"] as string) || undefined,
       dateTo: (args["date-to"] as string) || undefined,
-      countOnly: args["count-only"] === true || args["count-only"] === "true" ? true : undefined,
+      countOnly: args["count-only"] ? true : undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
       offset: Number(args.offset ?? 0),
     });

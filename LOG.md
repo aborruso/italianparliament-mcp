@@ -2,6 +2,7 @@
 
 ## 2026-06-29
 
+- **v0.5.1** — allineamento campi `aic` / `sindacato-ispettivo`: su `sindacato-ispettivo` rinominati `tipo`→`type`, `data`→`date`, `numero`→`identifier`, `senatore_uri`→`sponsor_uri`, `legislatura`→`legislature`; aggiunto filtro `keyword` (cerca in label/tipo/numero) e `countOnly`. Su `aic`: `legislature_uri`→`legislature` (numero estratto dall'URI), date normalizzata da `YYYYMMDD` a `YYYY-MM-DD`. Fix TS (comparazione boolean/string su `countOnly`). countOnly Senato implementato con `COUNT(DISTINCT ?s)` diretto (Virtuoso non supporta subquery wrap).
 - Nuovo tool **`senato-groups`** [SENATO]: elenca i gruppi parlamentari del Senato con sigla (`acronym`) e numero di componenti distinti (`members`), filtrabile per legislatura. È il parallelo diretto di `groups` (Camera). Query SPARQL con `COUNT(DISTINCT ?sen)` per evitare il doppio conteggio dovuto a senatori con carica interna (Presidente, Tesoriere, ecc.) che hanno due adesioni attive. Output: `uri`, `title`, `acronym`, `members`, `html_url`. Testato: XIX leg. → 9 gruppi, FdI 63, PD-IDP 36, Lega 29. CLI: `senato-groups list --legislature 19`. MCP, skill e README aggiornati.
 
 ## 2026-06-28
