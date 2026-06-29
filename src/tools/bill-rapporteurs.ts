@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cdQuery, snQuery } from "../core/client.js";
 import { OCD_PREFIXES, OSR_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { personHtmlUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -20,6 +21,7 @@ const columns = [
   "committee",
   "date",
   "deputy_uri",
+  "html_url",
 ];
 
 const RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label";
@@ -79,6 +81,7 @@ export const billRapporteursTool: Tool<typeof inputSchema> = {
         committee: r.organo ?? "",
         date: r.dataNomina ?? "",
         deputy_uri: r.senatoreUri ?? "",
+        html_url: personHtmlUrl(r.senatoreUri),
       }));
       return { rows, columns };
     }
@@ -90,6 +93,7 @@ export const billRapporteursTool: Tool<typeof inputSchema> = {
       committee: r.dibattitoLabel ?? "",
       date: r.startDate ?? "",
       deputy_uri: r.deputatoUri ?? "",
+      html_url: personHtmlUrl(r.deputatoUri),
     }));
     return { rows, columns };
   },

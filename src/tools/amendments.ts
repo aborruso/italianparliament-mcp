@@ -2,6 +2,7 @@ import { z } from "zod";
 import { snQuery } from "../core/client.js";
 import { OSR_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { actHtmlUrl, ddlRssUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -27,6 +28,8 @@ const columns = [
   "type",
   "legislature",
   "ddl_uri",
+  "ddl_html_url",
+  "rss_url",
   "url",
 ];
 
@@ -72,6 +75,8 @@ OFFSET ${input.offset}`;
       type: r.tipo ?? "",
       legislature: r.legislatura ?? "",
       ddl_uri: r.ddl ?? "",
+      ddl_html_url: actHtmlUrl(r.ddl),
+      rss_url: ddlRssUrl(r.ddl, r.legislatura ?? input.legislature),
       url: r.url ?? "",
     }));
     return { rows, columns };

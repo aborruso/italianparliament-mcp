@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { personHtmlUrl } from "./html-url.js";
+import { personHtmlUrl, actHtmlUrl, ddlRssUrl } from "./html-url.js";
 
 describe("personHtmlUrl", () => {
   it("mappa un deputato Camera in URL scheda elenco", () => {
@@ -29,5 +29,39 @@ describe("personHtmlUrl", () => {
     ).toBe("");
     expect(personHtmlUrl("")).toBe("");
     expect(personHtmlUrl(undefined)).toBe("");
+  });
+});
+
+describe("actHtmlUrl", () => {
+  it("mappa un atto Camera (legislatura dall'URI)", () => {
+    expect(
+      actHtmlUrl("http://dati.camera.it/ocd/attocamera.rdf/ac19_2822"),
+    ).toBe("https://www.camera.it/leg19/126?leg=19&idDocumento=2822");
+  });
+
+  it("mappa un DDL Senato", () => {
+    expect(actHtmlUrl("http://dati.senato.it/ddl/59851")).toBe(
+      "https://www.senato.it/leggi-e-documenti/disegni-di-legge/scheda-ddl?tab=datiGenerali&did=59851",
+    );
+  });
+
+  it("ritorna stringa vuota per URI non-atto o vuoto", () => {
+    expect(actHtmlUrl("http://dati.senato.it/senatore/32")).toBe("");
+    expect(actHtmlUrl(undefined)).toBe("");
+  });
+});
+
+describe("ddlRssUrl", () => {
+  it("costruisce il feed RSS del DDL con la legislatura", () => {
+    expect(ddlRssUrl("http://dati.senato.it/ddl/59372", 19)).toBe(
+      "https://www.senato.it/feed-rss/documenti/ddl/rss/59372/19",
+    );
+  });
+
+  it("ritorna stringa vuota senza legislatura o per non-DDL", () => {
+    expect(ddlRssUrl("http://dati.senato.it/ddl/59372", undefined)).toBe("");
+    expect(ddlRssUrl("http://dati.camera.it/ocd/attocamera.rdf/ac19_1", 19)).toBe(
+      "",
+    );
   });
 });

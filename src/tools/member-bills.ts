@@ -3,6 +3,7 @@ import { cdQuery, snQuery } from "../core/client.js";
 import { OCD_PREFIXES, OSR_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
 import { decodeHtml } from "../core/decode-html.js";
+import { actHtmlUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -28,6 +29,7 @@ const columns = [
   "status",
   "identifier",
   "chamber",
+  "html_url",
 ];
 
 export const memberBillsTool: Tool<typeof inputSchema> = {
@@ -81,6 +83,7 @@ SELECT DISTINCT ?uri ?title ?date ?type ?initiative ?identifier WHERE {
     status: "",
     identifier: r.identifier ?? "",
     chamber: "camera",
+    html_url: actHtmlUrl(r.uri),
   }));
   return { rows, columns };
 }
@@ -118,6 +121,7 @@ SELECT DISTINCT ?ddl ?titolo ?data ?tipo ?stato ?idDdl WHERE {
     status: r.stato ?? "",
     identifier: r.idDdl ?? "",
     chamber: "senato",
+    html_url: actHtmlUrl(r.ddl),
   }));
   return { rows, columns };
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { snQuery } from "../core/client.js";
 import { OSR_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { actHtmlUrl, ddlRssUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -48,6 +49,8 @@ const columns = [
   "voters",
   "majority",
   "ddl_uri",
+  "ddl_html_url",
+  "rss_url",
   "object_uri",
 ];
 
@@ -142,6 +145,17 @@ WHERE {
         object_uri: r.oggetto ?? "",
       });
     }
-    return { rows: [...byUri.values()], columns };
+    const joinMap = (ddl: string, fn: (u: string) => string): string =>
+      ddl
+        .split(" | ")
+        .map((u) => fn(u.trim()))
+        .filter(Boolean)
+        .join(" | ");
+    const rows = [...byUri.values()].map((v) => ({
+      ...v,
+      ddl_html_url: joinMap(v.ddl_uri, actHtmlUrl),
+      rss_url: joinMap(v.ddl_uri, (u) => ddlRssUrl(u, input.legislature)),
+    }));
+    return { rows, columns };
   },
 };

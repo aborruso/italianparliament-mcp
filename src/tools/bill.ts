@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cdQuery } from "../core/client.js";
 import { OCD_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { actHtmlUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -66,10 +67,7 @@ SELECT ?contributor WHERE {
     }
     const r = raw[0];
     const cosigs = flattenBindings(cosigsResults).map((x) => x.contributor ?? "").filter(Boolean);
-    const m = input.uri.match(/ac(\d+)_(\d+)$/);
-    const html_url = m
-      ? `https://www.camera.it/leg19/126?leg=${m[1]}&idDocumento=${m[2]}`
-      : "";
+    const html_url = actHtmlUrl(input.uri);
     const rows = [
       {
         uri: input.uri,

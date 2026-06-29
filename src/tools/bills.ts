@@ -3,6 +3,7 @@ import { cdQuery } from "../core/client.js";
 import { flattenBindings } from "../core/flatten.js";
 import { OCD_PREFIXES } from "../core/prefixes.js";
 import { decodeHtml } from "../core/decode-html.js";
+import { actHtmlUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -134,10 +135,7 @@ WHERE {
     const rows = raw.map((r) => {
       const { s, rif_leg, ...rest } = r;
       const uri = s ?? "";
-      const m = uri.match(/ac(\d+)_(\d+)$/);
-      const html_url = m
-        ? `https://www.camera.it/leg19/126?leg=${m[1]}&idDocumento=${m[2]}`
-        : "";
+      const html_url = actHtmlUrl(uri);
       return {
         uri,
         legislature_uri: rif_leg ?? "",

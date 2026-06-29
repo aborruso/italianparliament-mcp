@@ -2,6 +2,7 @@ import { z } from "zod";
 import { snQuery } from "../core/client.js";
 import { OSR_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { personHtmlUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -19,6 +20,7 @@ const columns = [
   "senator_uri",
   "type",
   "is_primary",
+  "html_url",
 ];
 
 export const billSignatoriesTool: Tool<typeof inputSchema> = {
@@ -52,6 +54,7 @@ LIMIT ${input.limit}`;
       senator_uri: r.senatore ?? "",
       type: r.tipoIniziativa ?? "",
       is_primary: r.primoFirmatario === "1" ? "true" : "false",
+      html_url: personHtmlUrl(r.senatore),
     }));
     return { rows, columns };
   },

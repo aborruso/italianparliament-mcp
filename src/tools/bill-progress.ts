@@ -2,6 +2,7 @@ import { z } from "zod";
 import { snQuery, cdQuery } from "../core/client.js";
 import { OSR_PREFIXES, OCD_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { ddlRssUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -53,6 +54,7 @@ const columns = [
   "phase",
   "phase_number",
   "html_url",
+  "rss_url",
 ];
 
 export const billProgressTool: Tool<typeof inputSchema> = {
@@ -147,6 +149,7 @@ OFFSET ${input.offset}`;
         phase: r.fase ?? "",
         phase_number: r.numeroFase ?? "",
         html_url,
+        rss_url: ddlRssUrl(ddl_uri, r.legislatura),
       };
     });
     return { rows, columns };
@@ -195,6 +198,7 @@ ORDER BY ?date`;
     phase: id ? `C.${id}` : "",
     phase_number: id,
     html_url,
+    rss_url: "",
   }));
   return { rows, columns: cols };
 }
