@@ -1,0 +1,41 @@
+---
+type: Gotcha
+title: Trappole Virtuoso — Senato (OSR)
+description: Quirk dell'endpoint SPARQL del Senato (Virtuoso) e del modello OSR.
+resource: https://dati.senato.it/sparql
+tags: [senato, osr, virtuoso, trappole]
+timestamp: 2026-07-01
+---
+
+Quirk noti dell'endpoint Senato (`dati.senato.it/sparql`, triplestore Virtuoso) e del modello OSR. Ignorarli produce 0 risultati muti o errori.
+
+# Query e sintassi
+
+| Trappola | Dettaglio |
+|----------|-----------|
+| `curl` diretto → **403** | L'endpoint respinge il curl nudo (pagina 403 HTML). Usare gli header della CLI (`snQuery` / `sparql query --endpoint senato`), non `curl` per i test Senato. |
+| **`BIND` non supportato** | Virtuoso Senato rifiuta `BIND(...)`. Portare la logica nel `SELECT`/`FILTER` o usare triple dirette. |
+| **`CONCAT` dentro `FILTER` invece funziona** | Verificato 2026-07-01: `FILTER(CONTAINS(LCASE(CONCAT(?fn," ",?ln)), q))` è valido ed è il modo per matchare nome+cognome insieme. |
+| **Legislatura come integer nudo** | Filtrare con `FILTER(?leg = 19)` (integer), non stringa né URI. |
+| Niente **subquery `COUNT`** | Le subquery di aggregazione danno errore; usare `GROUP BY` + `MIN`/`MAX` al livello esterno. |
+| **`osr:dataPresentazione` è `xsd:date` tipizzato** | I `FILTER` sulle date Senato richiedono `"AAAA-MM-GG"^^xsd:date` (la Camera usa stringhe `AAAAMMGG` plain). |
+
+# Matching nomi parlamentari
+
+`foaf:firstName` e `foaf:lastName` sono **campi separati**: un `FILTER(CONTAINS(?fn, q) || CONTAINS(?ln, q))` **non matcha** una query che contiene nome+cognome insieme (es. `"Ignazio La Russa"` fallisce, `"La Russa"` funziona). Serve il match sulla concatenazione nei due ordini:
+
+```sparql
+FILTER( CONTAINS(LCASE(CONCAT(?fn, " ", ?ln)), q)
+     || CONTAINS(LCASE(CONCAT(?ln, " ", ?fn)), q) )
+```
+
+Vedi issue #20. La Camera non ha il problema perché matcha su `rdfs:label` intero.
+
+# Performance
+
+Quando la legislatura è codificata **solo nell'URI**, un range filter su `?s` + `ORDER BY DESC(?s)` + `GROUP BY` è molto più veloce di `STRSTARTS` (es. `speeches` 6s → 1.8s).
+
+# Citations
+
+[1] Verifica `CONCAT`/matching nomi (2026-07-01): `sparql query --endpoint senato` su `"Ignazio La Russa"` → `senatore/1275`.
+[2] Issue matching nomi: https://github.com/aborruso/italianparliament-mcp/issues/20

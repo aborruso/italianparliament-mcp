@@ -1,5 +1,11 @@
 # LOG
 
+## 2026-07-01
+
+- **fix `search` — matching Senato nome+cognome (#20)**: `search find --name "Ignazio La Russa"` non trovava il senatore (mentre `"La Russa"` sì). Causa: `searchSenato` filtrava `CONTAINS(?fn, q) || CONTAINS(?ln, q)` confrontando la query separatamente con `firstName` e `lastName` → un nome completo non matcha nessuno dei due campi. La Camera non aveva il problema (match su `rdfs:label` intero). Fix: `FILTER(CONTAINS(LCASE(CONCAT(?fn," ",?ln)), q) || CONTAINS(LCASE(CONCAT(?ln," ",?fn)), q))` (concat nei due ordini; `CONCAT` in FILTER funziona sul Virtuoso Senato, `BIND` no). Verificato: `senatore/1275` per "Ignazio La Russa", `senatore/29480` per "Roberto Marti"; nessuna regressione. 51/51 test.
+- **avvio LOD wiki OKF** (`docs/lod-wiki/`): bundle [OKF](Open Knowledge Format) come fonte di verità dello schema LOD Camera (OCD) / Senato (OSR), pattern "compile don't retrieve" (idea in `docs/future-ideas.md`). Scaffold (`index.md`, `camera/`, `senato/`, `log.md`) + prime concept page verificate: `camera/assenti.md` (emendamenti Camera assenti dal LOD, con query di verifica) e `senato/trappole.md` (quirk Virtuoso: 403 su curl, no BIND, legislatura integer, matching nomi). Il differenziale sono trappole e assenti verificati.
+- **issue**: #19 (emendamenti Camera: verificato assenti dal LOD OCD — nessuna classe emendamento tra i 47 tipi RDF; solo testo in `dc:description` votazioni) chiusa *not planned*. #20 (fix sopra). #21 (link voto→DDL parziale: fiducie senza `osr:oggetto`) aperta, indagine LOD in corso.
+
 ## 2026-06-29
 
 - **v0.7.1** — rifiniture discoverability: `bill-rapporteurs` ora registrato anche in `src/tools/index.ts` (`tools`/`toolsByName`), allineato a `server.ts` (era discoverabile solo via CLI/MCP, non da `toolsByName`); aggiunto `people resolve` alla lista capability di `which`/`guide` (+ termini iter Camera su `bill-progress`). MCP invariato a 38 tool. 51/51 test. Resta da fare: sync documentazione README/skills con le feature 0.6.0/0.7.0 (issue dedicata).
