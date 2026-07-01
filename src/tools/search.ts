@@ -90,7 +90,7 @@ WHERE {
   ?m osr:legislatura ?leg .
   OPTIONAL { ?m osr:fine ?me }
   OPTIONAL { ?s <http://xmlns.com/foaf/0.1/gender> ?gen }
-  FILTER(CONTAINS(LCASE(?fn), LCASE("${escaped}")) || CONTAINS(LCASE(?ln), LCASE("${escaped}")))
+  FILTER(CONTAINS(LCASE(CONCAT(?fn, " ", ?ln)), LCASE("${escaped}")) || CONTAINS(LCASE(CONCAT(?ln, " ", ?fn)), LCASE("${escaped}")))
   ${legFilter}
   ${activeFilter}
 }
