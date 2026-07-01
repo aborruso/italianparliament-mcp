@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cdQuery, snQuery } from "../core/client.js";
 import { OCD_PREFIXES, OSR_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { toTitleCase } from "../core/normalize.js";
 import type { Tool } from "./types.js";
 
 const RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label";
@@ -108,7 +109,7 @@ OFFSET ${input.offset}`;
   return raw.map((r) => ({
     chamber: "camera",
     member_uri: r.deputy_uri ?? "",
-    member_name: stripLegLabel(r.label ?? ""),
+    member_name: toTitleCase(stripLegLabel(r.label ?? "")),
     committee_uri: r.organo ?? "",
     committee_name: r.organo_label ?? "",
     role: r.carica ?? "",
@@ -159,7 +160,7 @@ OFFSET ${input.offset}`;
   return raw.map((r) => ({
     chamber: "senato",
     member_uri: r.senatore_uri ?? "",
-    member_name: r.senatore_nome ?? "",
+    member_name: toTitleCase(r.senatore_nome ?? ""),
     committee_uri: r.commissione ?? "",
     committee_name: r.commissione_nome ?? "",
     role: r.carica ?? "",

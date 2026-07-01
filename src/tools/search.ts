@@ -3,7 +3,10 @@ import { cdQuery, snQuery } from "../core/client.js";
 import { flattenBindings } from "../core/flatten.js";
 import { OCD_PREFIXES, OSR_PREFIXES } from "../core/prefixes.js";
 import { personHtmlUrl } from "../core/html-url.js";
+import { toTitleCase, normalizeGender } from "../core/normalize.js";
 import type { Tool } from "./types.js";
+
+const SENATO_LEG_BASE = "http://dati.senato.it/legislatura/";
 
 const inputSchema = z.object({
   name: z.string().min(1).describe("Nome o cognome da cercare"),
@@ -55,16 +58,20 @@ WHERE {
 LIMIT ${limit}`;
   const results = await cdQuery(query);
   const raw = flattenBindings(results);
-  return raw.map((r) => ({
-    chamber: "camera",
-    uri: r.s ?? "",
-    label: r.label ?? "",
-    first_name: r.first_name ?? "",
-    last_name: r.last_name ?? "",
-    gender: r.gender ?? "",
-    legislature_uri: r.rif_leg ?? "",
-    html_url: personHtmlUrl(r.s),
-  }));
+  return raw.map((r) => {
+    const first_name = toTitleCase(r.first_name ?? "");
+    const last_name = toTitleCase(r.last_name ?? "");
+    return {
+      chamber: "camera",
+      uri: r.s ?? "",
+      label: `${first_name} ${last_name}`.trim(),
+      first_name,
+      last_name,
+      gender: normalizeGender(r.gender ?? ""),
+      legislature_uri: r.rif_leg ?? "",
+      html_url: personHtmlUrl(r.s),
+    };
+  });
 }
 
 async function searchSenato(
@@ -98,16 +105,20 @@ ORDER BY ?ln ?fn
 LIMIT ${limit}`;
   const results = await snQuery(query);
   const raw = flattenBindings(results);
-  return raw.map((r) => ({
-    chamber: "senato",
-    uri: r.s ?? "",
-    label: `${r.fn ?? ""} ${r.ln ?? ""}`.trim(),
-    first_name: r.fn ?? "",
-    last_name: r.ln ?? "",
-    gender: r.gen ?? "",
-    legislature_uri: r.leg ?? "",
-    html_url: personHtmlUrl(r.s),
-  }));
+  return raw.map((r) => {
+    const first_name = toTitleCase(r.fn ?? "");
+    const last_name = toTitleCase(r.ln ?? "");
+    return {
+      chamber: "senato",
+      uri: r.s ?? "",
+      label: `${first_name} ${last_name}`.trim(),
+      first_name,
+      last_name,
+      gender: normalizeGender(r.gen ?? ""),
+      legislature_uri: r.leg ? `${SENATO_LEG_BASE}${r.leg}` : "",
+      html_url: personHtmlUrl(r.s),
+    };
+  });
 }
 
 export const searchTool: Tool<typeof inputSchema> = {

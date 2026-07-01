@@ -143,8 +143,9 @@ describe("Camera tools", () => {
       limit: 10,
     });
     expect(result.rows.length).toBeGreaterThan(0);
-    const giorgia = result.rows.find((r) => r.first_name === "GIORGIA");
+    const giorgia = result.rows.find((r) => r.first_name === "Giorgia");
     expect(giorgia).toBeDefined();
+    expect(giorgia?.gender).toBe("female");
   }, 30000);
 
   it("gov-members: returns Meloni government members", async () => {

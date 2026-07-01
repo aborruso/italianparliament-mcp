@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cdQuery, snQuery } from "../core/client.js";
 import { flattenBindings } from "../core/flatten.js";
 import { personHtmlUrl } from "../core/html-url.js";
+import { toTitleCase } from "../core/normalize.js";
 import type { Tool } from "./types.js";
 
 const inputSchema = z.object({
@@ -88,8 +89,8 @@ export const peopleTool: Tool<typeof inputSchema> = {
       const chamber = chamberOf(uri);
       const hit =
         chamber === "camera" ? cameraMap.get(uri) : senatoMap.get(uri);
-      const first_name = hit?.fn ?? "";
-      const last_name = hit?.ln ?? "";
+      const first_name = toTitleCase(hit?.fn ?? "");
+      const last_name = toTitleCase(hit?.ln ?? "");
       return {
         uri,
         first_name,
