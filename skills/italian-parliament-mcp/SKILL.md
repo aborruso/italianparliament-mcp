@@ -44,6 +44,7 @@ See [tool reference](references/tools.md) for the full list with parameters and 
 | Relatori di un DDL (Camera o Senato) | `bill-rapporteurs` |
 | Membri di una commissione Senato | `committee-members` |
 | Sedute di commissione su un DDL Senato, o attività di una commissione (Camera+Senato) | `committee-sessions` |
+| Audizioni delle commissioni (solo Camera) | `audizioni` |
 | Interrogazioni, interpellanze, mozioni | `aic` (Camera) / `sindacato-ispettivo` (Senato) |
 | Votazioni Camera | `votes` / `vote-detail` |
 | Votazioni Senato | `senato-votes` / `senato-vote-detail` |
