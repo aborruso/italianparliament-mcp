@@ -22,6 +22,16 @@ describe("sparql tool", () => {
         }),
       ).rejects.toThrow("Solo query SELECT supportate");
     });
+
+    it("accepts a one-line SELECT with a #-terminated PREFIX before SELECT (regression)", async () => {
+      const result = await sparqlTool.execute({
+        query:
+          "PREFIX ocd: <http://dati.camera.it/ocd/> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?label WHERE { ?o a ocd:legislatura ; rdfs:label ?label }",
+        endpoint: "camera",
+        limit: 1,
+      });
+      expect(result.rows.length).toBe(1);
+    }, 30000);
   });
 
   describe("integration", () => {

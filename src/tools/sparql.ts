@@ -17,8 +17,32 @@ const inputSchema = z.object({
     .describe("Numero massimo di righe (iniettato come LIMIT se assente nella query)"),
 });
 
+/**
+ * Rimuove i commenti SPARQL (da `#` a fine riga), ignorando i `#` dentro un
+ * IRI (es. `<http://www.w3.org/2000/01/rdf-schema#>`): i prefissi standard
+ * rdfs/rdf/owl/xsd terminano in `#`, e su query scritte su una sola riga un
+ * replace ingenuo tronca tutto il resto della query, "SELECT" incluso.
+ */
+function stripComments(query: string): string {
+  let result = "";
+  let inIri = false;
+  for (let i = 0; i < query.length; i++) {
+    const ch = query[i];
+    if (ch === "<") inIri = true;
+    else if (ch === ">") inIri = false;
+    if (ch === "#" && !inIri) {
+      const nl = query.indexOf("\n", i);
+      if (nl === -1) break;
+      i = nl - 1;
+      continue;
+    }
+    result += ch;
+  }
+  return result;
+}
+
 function validateSelectQuery(query: string): void {
-  const stripped = query.replace(/#[^\n]*/g, "");
+  const stripped = stripComments(query);
   if (!/\bSELECT\b/i.test(stripped)) {
     throw new Error(
       "Solo query SELECT supportate (non CONSTRUCT, ASK, DESCRIBE o operazioni di scrittura).",
