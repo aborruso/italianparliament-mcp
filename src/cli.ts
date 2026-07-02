@@ -1134,19 +1134,35 @@ const committeeSessionsList = defineCommand({
   meta: {
     name: "list",
     description: withExamples(
-      "List Senato committee sessions where a bill was discussed.",
+      "Committee activity. Mode 1: bill progress (--ddl-uri, Senato). Mode 2: follow a committee (--committee-uri or --committee-name + --chamber, Camera+Senato).",
       committeeSessionsTool.examples,
     ),
   },
   args: {
-    "ddl-uri": { type: "string", description: "Senato ddl URI", required: true },
+    "ddl-uri": { type: "string", description: "Senato ddl URI (bill progress mode)" },
+    "committee-uri": { type: "string", description: "Committee URI (Camera organo or Senato commissione). Follow-committee mode." },
+    "committee-name": { type: "string", description: 'Committee name (or substring) to resolve, e.g. "giustizia", "femminicidio". Use with --chamber and --legislature.' },
+    chamber: { type: "string", default: "both", description: "camera, senato, or both (follow-committee mode). Ignored with --ddl-uri." },
+    legislature: { type: "string", description: "Legislature number (default 19)" },
+    "date-from": { type: "string", description: 'Start date inclusive. Senato: AAAA-MM-GG; Camera: AAAAMMGG or AAAA-MM-GG.' },
+    "date-to": { type: "string", description: 'End date inclusive. Senato: AAAA-MM-GG; Camera: AAAAMMGG or AAAA-MM-GG.' },
     limit: { type: "string", default: "200" },
     offset: { type: "string", default: "0" },
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
+    const chamber = (args.chamber as string) || "both";
+    if (!["camera", "senato", "both"].includes(chamber)) {
+      throw new Error(`Invalid --chamber "${chamber}". Expected: camera, senato, both.`);
+    }
     const result = await runTool(committeeSessionsTool, {
-      ddlUri: args["ddl-uri"] as string,
+      ddlUri: (args["ddl-uri"] as string) || undefined,
+      committeeUri: (args["committee-uri"] as string) || undefined,
+      committeeName: (args["committee-name"] as string) || undefined,
+      chamber: chamber as "camera" | "senato" | "both",
+      legislature: parseIntFlag(args.legislature as string, "legislature"),
+      dateFrom: (args["date-from"] as string) || undefined,
+      dateTo: (args["date-to"] as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 200,
       offset: Number(args.offset ?? 0),
     });
@@ -1344,7 +1360,7 @@ const CAPABILITIES: { cmd: string; terms: string[]; desc: string }[] = [
   { cmd: "bill-rapporteurs list", terms: ["relatore", "relatori", "relatrice", "chi relaziona"], desc: "Relatori di un DDL (Camera o Senato, dall'URI)" },
   { cmd: "bill-text links / fetch", terms: ["testo", "articolato", "pdf", "testo ddl", "contenuto legge"], desc: "Link al testo di un DDL e download/conversione (Senato)" },
   { cmd: "amendments list", terms: ["emendamenti", "ostruzionismo"], desc: "Emendamenti Senato (--ddl-uri per un DDL)" },
-  { cmd: "committee-sessions list", terms: ["commissione", "sedute", "lavori commissione"], desc: "Sedute di commissione su un DDL (Senato)" },
+  { cmd: "committee-sessions list", terms: ["commissione", "sedute", "lavori commissione", "attività commissione", "follow commissione", "bollettini commissione"], desc: "Attività delle commissioni: iter di un DDL (--ddl-uri) o sedute di una commissione per data (--committee-uri/--committee-name + --chamber, Camera+Senato)" },
   { cmd: "votes list / vote-detail show", terms: ["votazione", "voto", "come ha votato", "fiducia", "camera"], desc: "Votazioni Camera e voto individuale" },
   { cmd: "senato-votes list / senato-vote-detail show", terms: ["votazione senato", "voto senatore", "ribelli senato"], desc: "Votazioni Senato e voto individuale" },
   { cmd: "aic list", terms: ["interrogazione", "interpellanza", "mozione", "sindacato ispettivo camera", "tema"], desc: "Atti di indirizzo e controllo Camera (--keyword)" },
@@ -1563,7 +1579,7 @@ const main = defineCommand({
       subCommands: { list: groupRankList },
     }),
     "committee-sessions": defineCommand({
-      meta: { name: "committee-sessions", description: "Senato committee sessions where a bill was discussed" },
+      meta: { name: "committee-sessions", description: "Committee activity: bill progress (Senato) or follow a committee (Camera+Senato)" },
       subCommands: { list: committeeSessionsList },
     }),
     "person-career": defineCommand({

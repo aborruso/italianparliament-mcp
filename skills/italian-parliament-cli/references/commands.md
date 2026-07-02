@@ -179,10 +179,21 @@ italianparliament senato-vote-detail show --vote-uri http://dati.senato.it/votaz
 ```
 
 ### `committee-sessions list`
-Sedute di commissione in cui un DDL è stato trattato.
+Attività delle commissioni. Due modalità:
+- **iter di un DDL** (`--ddl-uri`, Senato): sedute in cui il provvedimento è stato trattato.
+- **segui una commissione** (`--committee-uri` o `--committee-name` + `--chamber`): tutte le sedute di una commissione, filtrabili per data. Camera: data + URL del bollettino; Senato: data, tipo seduta, numero interventi.
+
 ```bash
+# iter di un DDL
 italianparliament committee-sessions list --ddl-uri http://dati.senato.it/ddl/56260
+# segui una commissione per nome
+italianparliament committee-sessions list --committee-name femminicidio --chamber camera
+italianparliament committee-sessions list --committee-name giustizia --chamber senato --date-from 2026-05-01 --date-to 2026-05-31
+# o per URI diretto
+italianparliament committee-sessions list --committee-uri http://dati.camera.it/ocd/organo.rdf/o19_3941 --chamber camera
 ```
+
+> Le commissioni bicamerali (es. inchiesta femminicidio) hanno attività esposta solo dalla Camera.
 
 ### `bill-text links` (Camera + Senato)
 Link diretti al testo di un DDL, con tipo risorsa (`format`) e se serve un browser (`auth`).

@@ -13,11 +13,11 @@ Quirk noti dell'endpoint Senato (`dati.senato.it/sparql`, triplestore Virtuoso) 
 
 | Trappola | Dettaglio |
 |----------|-----------|
-| `curl` diretto → **403** | L'endpoint respinge il curl nudo (pagina 403 HTML). Usare gli header della CLI (`snQuery` / `sparql query --endpoint senato`), non `curl` per i test Senato. |
+| `curl` diretto → comportamento **non stabile** | In precedenza l'endpoint poteva rispondere 403 a richieste grezze; alla verifica del 2026-07-01 `curl` semplice restituisce invece 200 (XML o JSON a seconda del `format`). Non assumere più il 403 come proprietà stabile dell'endpoint. |
 | **`BIND` non supportato** | Virtuoso Senato rifiuta `BIND(...)`. Portare la logica nel `SELECT`/`FILTER` o usare triple dirette. |
 | **`CONCAT` dentro `FILTER` invece funziona** | Verificato 2026-07-01: `FILTER(CONTAINS(LCASE(CONCAT(?fn," ",?ln)), q))` è valido ed è il modo per matchare nome+cognome insieme. |
 | **Legislatura come integer nudo** | Filtrare con `FILTER(?leg = 19)` (integer), non stringa né URI. |
-| Niente **subquery `COUNT`** | Le subquery di aggregazione danno errore; usare `GROUP BY` + `MIN`/`MAX` al livello esterno. |
+| **Subquery aggregate fragili** | Alcune subquery con `COUNT` funzionano, altre no o danno risultati vuoti/inaffidabili a seconda della forma. Non fare affidamento su subquery aggregate complesse: preferire `GROUP BY` + `MIN`/`MAX`/`COUNT` al livello esterno quando possibile. |
 | **`osr:dataPresentazione` è `xsd:date` tipizzato** | I `FILTER` sulle date Senato richiedono `"AAAA-MM-GG"^^xsd:date` (la Camera usa stringhe `AAAAMMGG` plain). |
 
 # Matching nomi parlamentari

@@ -12,4 +12,4 @@ Endpoint SPARQL: `https://dati.senato.it/sparql`. Ontologia OSR (namespace `http
 
 # Entità
 
-(da popolare — es. Senatore, Ddl, SedutaCommissione, OggettoTrattazione, Votazione, Emendamento)
+* [Sedute e attività delle commissioni](sedute-commissione.md) - `osr:SedutaCommissione` per commissione e per data; proprietà reali (`osr:dataSeduta`, `osr:titoloBreve`) e trappola doppia etichetta.
