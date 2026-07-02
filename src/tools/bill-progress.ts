@@ -2,6 +2,7 @@ import { z } from "zod";
 import { snQuery, cdQuery } from "../core/client.js";
 import { OSR_PREFIXES, OCD_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
+import { decodeHtml } from "../core/decode-html.js";
 import { ddlRssUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
@@ -188,8 +189,8 @@ ORDER BY ?date`;
 
   const rows = raw.map((r) => ({
     ddl_uri: uri,
-    title: r.titolo ?? "",
-    status: r.stato ?? "",
+    title: decodeHtml(r.titolo ?? ""),
+    status: decodeHtml(r.stato ?? ""),
     status_date: fmtDate(r.date),
     presentation_date: "",
     initiative_description: "",

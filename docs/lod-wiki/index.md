@@ -11,3 +11,7 @@ Il differenziale rispetto a una semplice descrizione dell'ontologia sono le **tr
 # Senato (OSR)
 
 * [Senato](senato/) - endpoint `dati.senato.it/sparql`, ontologia OSR; entità, trappole e assenti.
+
+# Trasversali
+
+* [Freschezza del dato e cosa fa fede sull'approvazione](freschezza-e-autorevolezza.md) - il LOD non espone un "as-of" affidabile; per l'esito (approvato/respinto/promulgato) la fonte di verità è resoconto/scheda iter/GU. Distinzione "approvato da un ramo" ≠ "legge".
