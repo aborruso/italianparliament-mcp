@@ -195,6 +195,25 @@ italianparliament committee-sessions list --committee-uri http://dati.camera.it/
 
 > Le commissioni bicamerali (es. inchiesta femminicidio) hanno attività esposta solo dalla Camera.
 
+### `audizioni list` (solo Camera)
+Audizioni delle commissioni: data, commissione, titolo (nome/ruolo dell'audito nel testo), atti collegati (`bill_codes`/`bill_uris`) e link al bollettino. Leg. 19 (dato vivo) via titolo della discussione; leg. 14 (storica) via `dc:type` "Audizioni informali".
+
+```bash
+# tutte le audizioni recenti
+italianparliament audizioni list --legislature 19 --limit 50
+# per commissione (anche d'inchiesta)
+italianparliament audizioni list --legislature 19 --committee-name femminicidio
+# per tema/soggetto audito (cerca nel titolo)
+italianparliament audizioni list --legislature 19 --keyword Confindustria
+italianparliament audizioni list --legislature 19 --keyword prefetto --date-from 2026-01-01
+# storico (legislatura 14)
+italianparliament audizioni list --legislature 14 --committee-name difesa
+```
+
+> **Senato non coperto**: via SPARQL le audizioni Senato (`osr:Procedura` `tipo="Audizioni"`) esistono ma senza data né commissione (link agli interventi rotto). Solo Camera.
+> **Limiti**: l'audito è testo nel titolo, non entità strutturata; il filtro è testuale (per una legge specifica cerca il tema con `--keyword`, non tutti i titoli citano il DDL); nessun link video/YouTube nel LOD.
+> **`--keyword` non è "chi è stato audito"**: una corrispondenza dice solo che la parola compare nel titolo, non che quel soggetto sia stato audito (può essere l'oggetto dell'indagine o un ente citato nel contesto). Verificare sempre il titolo completo.
+
 ### `bill-text links` (Camera + Senato)
 Link diretti al testo di un DDL, con tipo risorsa (`format`) e se serve un browser (`auth`).
 ```bash

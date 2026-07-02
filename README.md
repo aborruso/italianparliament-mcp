@@ -100,6 +100,7 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 | `senato-votes list` | Votazioni d'Assemblea del Senato con esito, contatori (favorevoli/contrari/astenuti), tipo, data e DDL collegato. Filtrabile per legislatura, data, DDL |
 | `senato-vote-detail show` | Come ha votato ogni singolo senatore in una votazione (favorevole/contrario/astenuto/presente non votante/in congedo), con il gruppo di appartenenza alla data del voto — consente il voto per gruppo |
 | `committee-sessions list` | Attività delle commissioni. Iter di un DDL (`--ddl-uri`, Senato) o tutte le sedute di una commissione per data (`--committee-uri`/`--committee-name` + `--chamber`, Camera+Senato); Camera mostra data + URL del bollettino, Senato data/tipo/interventi |
+| `audizioni list` | **[CAMERA]** Audizioni delle commissioni: data, commissione, titolo (con nome/ruolo dell'audito), atti collegati e link al bollettino. Filtrabile per `--legislature`, `--committee-name`, `--keyword`, data. Leg. 19 (dato vivo) via titolo della discussione; leg. 14 (storica) via `dc:type`. Senato non coperto (via SPARQL non espone data né commissione delle audizioni) |
 
 ### Testo dei disegni di legge
 
@@ -235,6 +236,20 @@ In quali sedute di commissione è passato un DDL?
 
 ```
 italianparliament committee-sessions list --ddl-uri http://dati.senato.it/ddl/56260
+```
+
+Cerca una parola nel titolo delle audizioni (es. Confindustria)? (solo Camera)
+
+```
+italianparliament audizioni list --legislature 19 --keyword Confindustria
+```
+
+> La corrispondenza dice solo che la parola è nel titolo, **non** che quel soggetto sia stato audito: potrebbe essere l'oggetto dell'indagine o un ente citato nel contesto. Va sempre verificato il titolo completo.
+
+Quali audizioni ha svolto una commissione d'inchiesta (es. femminicidio)? (solo Camera)
+
+```
+italianparliament audizioni list --legislature 19 --committee-name femminicidio
 ```
 
 Quali interrogazioni al Senato questa settimana?
@@ -380,7 +395,7 @@ Da qui si verifica che **Matteo Salvini** (Lega) ha votato **Favorevole** e si r
 
 I dati provengono dagli endpoint SPARQL ufficiali di Camera e Senato. Alcune limitazioni note:
 
-- **Scheda istituzionale** (`html_url`): i tool che restituiscono persone (`deputies`, `senators`, `search`, `group-members`, `senator-group-members`, `rank`, `vote-detail`, `senato-vote-detail`, `people`...) e atti/DDL (`bills`, `bill`, `member-bills`, `bill-signatories`, `bill-rapporteurs`, `amendments`, `senato-votes`, `bill-progress`...) espongono una colonna `html_url` con il link alla scheda su `camera.it`/`senato.it`, accanto all'URI SPARQL. I pattern sono verificati sulla legislatura 19; per legislature passate l'URL è best-effort.
+- **Scheda istituzionale** (`html_url`): i tool che restituiscono persone (`deputies`, `senators`, `search`, `group-members`, `senator-group-members`, `rank`, `vote-detail`, `senato-vote-detail`, `people`...) e atti/DDL (`bills`, `bill`, `member-bills`, `bill-signatories`, `bill-rapporteurs`, `bill-progress`...) espongono una colonna `html_url` con il link alla scheda su `camera.it`/`senato.it`, accanto all'URI SPARQL. I tool sui DDL del Senato `amendments` e `senato-votes` espongono invece `ddl_html_url`. I pattern sono verificati sulla legislatura 19; per legislature passate l'URL è best-effort.
 - **Feed RSS iter** (`rss_url`): i tool sui DDL del Senato (`amendments`, `senato-votes`, `bill-progress`) espongono `rss_url`, il feed RSS con l'iter dettagliato del DDL (fasi, sedute, voto finale, esiti).
 - **Gruppi** (`groups`): l'acronimo viene dal campo `dcterms:alternative` dell'endpoint (es. `AVS`, `PD-IDP`); per i rari casi senza quel campo si ricava dalla label.
 - **Documenti Camera**: l'endpoint Camera non espone documenti parlamentari via SPARQL. Il tool `documents` usa i dati del Senato.

@@ -37,6 +37,7 @@ import { groupRankTool } from "./tools/group-rank.js";
 import { committeeSessionsTool } from "./tools/committee-sessions.js";
 import { personCareerTool } from "./tools/person-career.js";
 import { peopleTool } from "./tools/people.js";
+import { audizioniTool } from "./tools/audizioni.js";
 import { fetchSenatoText } from "./core/fetch-text.js";
 import { formatRows, type Format } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
@@ -1176,6 +1177,38 @@ const committeeSessionsList = defineCommand({
   },
 });
 
+const audizioniList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "[CAMERA] Committee hearings (audizioni). Leg. 19: via discussion title (date, committee, audited person in title, linked bills, bulletin). Leg. 14: via historical dc:type. Senato not covered.",
+      audizioniTool.examples,
+    ),
+  },
+  args: {
+    legislature: { type: "string", description: "Legislature number (default 19)" },
+    "committee-name": { type: "string", description: 'Committee name/substring, e.g. "femminicidio", "periferie".' },
+    keyword: { type: "string", description: 'Keyword in the hearing title, e.g. "prefetto", "Enel", "equo compenso".' },
+    "date-from": { type: "string", description: "Start date inclusive. AAAAMMGG or AAAA-MM-GG." },
+    "date-to": { type: "string", description: "End date inclusive. AAAAMMGG or AAAA-MM-GG." },
+    limit: { type: "string", default: "200" },
+    offset: { type: "string", default: "0" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await runTool(audizioniTool, {
+      legislature: parseIntFlag(args.legislature as string, "legislature") ?? 19,
+      committeeName: (args["committee-name"] as string) || undefined,
+      keyword: (args.keyword as string) || undefined,
+      dateFrom: (args["date-from"] as string) || undefined,
+      dateTo: (args["date-to"] as string) || undefined,
+      limit: parseIntFlag(args.limit as string, "limit") ?? 200,
+      offset: Number(args.offset ?? 0),
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
 const groupRankList = defineCommand({
   meta: {
     name: "list",
@@ -1595,6 +1628,10 @@ const main = defineCommand({
     people: defineCommand({
       meta: { name: "people", description: "Batch resolve person URIs (mixed Camera + Senato) to names" },
       subCommands: { resolve: peopleResolve },
+    }),
+    audizioni: defineCommand({
+      meta: { name: "audizioni", description: "[CAMERA] Committee hearings (audizioni): date, committee, audited person, linked bills, bulletin" },
+      subCommands: { list: audizioniList },
     }),
     guide: guideCmd,
     which: whichCmd,

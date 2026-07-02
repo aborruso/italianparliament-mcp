@@ -128,6 +128,16 @@ Sedute di commissione in cui un DDL è stato trattato (iter in commissione).
 - `ddlUri` (required): URI del DDL Senato
 - Output: data, commissione, tipo seduta, n. interventi.
 
+### `audizioni` (solo Camera)
+Audizioni delle commissioni della Camera: data, commissione, titolo (con nome/ruolo dell'audito nel testo), atti collegati, link al bollettino.
+- `legislature`: default 19 (dato vivo, via titolo della discussione); 14 = storica (via `dc:type`).
+- `committeeName`: nome/parte commissione (es. "femminicidio").
+- `keyword`: parola nel titolo dell'audizione (es. "Confindustria", "prefetto") — **ricerca testuale**. NB: una corrispondenza NON significa che quel soggetto sia stato audito (può essere l'oggetto dell'indagine o un ente citato); verificare il titolo completo.
+- `dateFrom`/`dateTo`, `limit`, `offset`.
+- Output: `date, committee, title, bill_codes, bill_uris, bulletin_url, discussion_uri, dibattito_uri`.
+- **Senato non coperto**: `osr:Procedura` `tipo="Audizioni"` esiste ma senza data né commissione (link interventi rotto).
+- **Limiti**: audito = stringa nel titolo (non entità); filtro testuale (non tutti i titoli citano il DDL su cui verte l'audizione); nessun link video/YouTube nel LOD.
+
 ### `bill-text` (Camera + Senato)
 Link diretti al testo di un DDL, con tipo risorsa (`format`: html/pdf/urn) e se serve un browser (`auth`: none/browser). Il testo integrale NON è nei dati SPARQL.
 - `uri` (required): URI dell'atto (`http://dati.senato.it/ddl/<N>` o atto Camera)

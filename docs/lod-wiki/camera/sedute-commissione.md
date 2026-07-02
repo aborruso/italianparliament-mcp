@@ -86,15 +86,15 @@ SELECT ?organo ?label WHERE {
 
 Il `dc:relation`/`ocd:rif_bollettino` punta al **documento bollettino** (HTML/indice). Gli **argomenti trattati** e gli **atti discussi** in ciascuna seduta **non sono modellati come triple**: vanno recuperati parsando il bollettino. La seduta dà data + commissione + URL del bollettino, non l'elenco strutturato degli oggetti.
 
-# ocd:dibattito — le "Audizioni informali" esistono, ma solo in un lotto storico (leg. 14)
+# ocd:dibattito — le audizioni SI trovano anche per la leg. 19, ma NON via dc:type
 
-`ocd:dibattito` è una classe **diversa** da `ocd:seduta`, con predicati propri (`dc:type`, `dc:title`, `ocd:rif_organo` multi-valore, `ocd:rif_discussione`, `ocd:rif_leg`, …). Esiste per **tutte** le legislature (costituente → repubblica_19, decine di migliaia di istanze ciascuna), ma il predicato `dc:type` che classifica il dibattito **è valorizzato solo fino alla legislatura 15** — e solo nella legislatura 14 compaiono i valori `"Audizioni informali"` / `"AUDIZIONI INFORMALI"` (619 dibattiti, tutti `rif_leg = repubblica_14`; verificato 2026-07-02).
+`ocd:dibattito` è una classe **diversa** da `ocd:seduta`. La sua struttura è **cambiata tra legislature** e ci sono **due vie distinte** per le audizioni, da non confondere.
 
-Per la legislatura 19 (attuale) `ocd:dibattito` esiste (53.938 istanze) ma **non ha alcun `dc:type`**: nessuna audizione è quindi distinguibile dagli altri dibattiti d'aula via SPARQL nel dato corrente. Il concetto "audizione" non è quindi assente dal grafo in senso assoluto, ma è **relitto di un unico lotto di caricamento storico**, non un dato mantenuto nel tempo.
+## Via A — `dc:type` (SOLO leg. 14, storica)
+
+Fino alla legislatura 14, `ocd:dibattito` aveva `dc:type`, `ocd:rif_organo` (multi-valore), `dc:coverage`, `dcterms:isReferencedBy`. Il `dc:type` classifica il dibattito e **solo nella leg. 14** compaiono i valori `"Audizioni informali"` / `"AUDIZIONI INFORMALI"` (619 dibattiti, tutti `rif_leg = repubblica_14`; verificato 2026-07-02). Il `dc:type` **è assente dalla leg. 19**: questa via NON funziona per il dato corrente.
 
 ```sparql
-PREFIX ocd: <http://dati.camera.it/ocd/>
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
 SELECT ?leg (COUNT(?s) AS ?n) WHERE {
   ?s a ocd:dibattito ; dc:type ?type .
   FILTER(?type IN ("Audizioni informali","AUDIZIONI INFORMALI"))
@@ -103,7 +103,39 @@ SELECT ?leg (COUNT(?s) AS ?n) WHERE {
 -- → un'unica riga: repubblica_14, n=619
 ```
 
-Dettagli ulteriori (struttura del dibattito, join con organo/commissione, limiti nel risalire a chi è stato audito) in `tmp/audizioni.md` (nota di lavoro non versionata).
+## Via B — titolo della `ocd:discussione` (funziona per la leg. 19) ✅
+
+Per la leg. 19 (53.938 dibattiti) la struttura è diversa: niente `dc:type`, niente `ocd:rif_organo`; in compenso `ocd:startDate`/`ocd:endDate` (data diretta `AAAAMMGG`), `ocd:rif_assemblea`, `ocd:rif_aic`, `ocd:rif_attoCamera`, `ocd:rif_discussione`, `dc:title`/`rdfs:label`, `ods:modified`.
+
+⚠️ Il `dc:title` del **dibattito** leg. 19 è generico: solo il nome della commissione (es. "II Commissione (Giustizia)") o "Discussione in Assemblea". **Non** descrive il contenuto. Il contenuto reale sta sulla `ocd:discussione` collegata via `ocd:rif_discussione`:
+
+| Proprietà di `ocd:discussione` | Contenuto |
+|---|---|
+| `dc:title`/`rdfs:label` | **titolo reale** — nomina esplicitamente l'audito e il ruolo (es. *"Audizione di Michele Di Bari, prefetto di Napoli"*) |
+| `dc:date` | data (`AAAAMMGG`) |
+| `ocd:rif_intervento` | interventi effettivi dei parlamentari (URI `intervento`) |
+| `ocd:rif_relatore` | relatori |
+| `ocd:rif_seduta` | seduta |
+| `dc:relation` | link al punto esatto del bollettino HTML |
+
+Le audizioni leg. 19 si trovano quindi filtrando `"audiz"` nel titolo della discussione: **6.636 discussioni** leg. 19, dato **vivo** (fino al 2026-06-16; verificato 2026-07-02). A differenza della leg. 14, i titoli leg. 19 nominano esplicitamente **nome + ruolo/ente** dell'audito.
+
+```sparql
+PREFIX ocd: <http://dati.camera.it/ocd/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+SELECT DISTINCT ?date ?organo ?audizione WHERE {
+  ?dib a ocd:dibattito ;
+       ocd:rif_leg <http://dati.camera.it/ocd/legislatura.rdf/repubblica_19> ;
+       dc:title ?organo ;                 # nome commissione
+       ocd:rif_discussione ?d .
+  ?d dc:title ?audizione ; dc:date ?date . # titolo reale + data
+  FILTER(CONTAINS(LCASE(?audizione), "audizione di"))
+} ORDER BY DESC(?date)
+```
+
+> **Correzione (2026-07-02)**: versioni precedenti di questa pagina e di `tmp/audizioni.md` concludevano che per la leg. 19 le audizioni non fossero raggiungibili via SPARQL. Falso: lo sono via Via B (titolo della discussione), non via `dc:type`. Resta un filtro testuale, ma il titolo leg. 19 è ricco (nome + ruolo dell'audito). Chi è audito NON è comunque un'entità/URI strutturata: resta stringa nel titolo.
+
+Dettagli ulteriori in `tmp/audizioni.md` (nota di lavoro non versionata).
 
 # Caso d'uso — Commissione bicamerale femminicidio
 
