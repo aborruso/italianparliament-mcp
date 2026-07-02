@@ -62,7 +62,10 @@ async function sparqlRequest(
       if (err instanceof SparqlError) throw err;
       lastErr = err;
       if (attempt === maxRetries) break;
-      await new Promise((r) => setTimeout(r, 500 * attempt));
+      // Backoff esponenziale con tetto a 2s: 250, 500, 1000, 2000ms (~4s totali
+      // su 5 tentativi) per superare i flap transitori dell'endpoint Camera.
+      const delayMs = Math.min(2000, 250 * 2 ** (attempt - 1));
+      await new Promise((r) => setTimeout(r, delayMs));
     }
   }
   throw new SparqlError(
