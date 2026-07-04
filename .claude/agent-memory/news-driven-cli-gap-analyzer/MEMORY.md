@@ -1,4 +1,0 @@
-- [Gap chiusi al 2026-07-01](gaps_closed_2026_07_01.md) — senato-votes/vote-detail, bill-rapporteurs Senato, aic --keyword, amendments --ddl-uri: non ritestare da zero
-- [Gap ricorrenti ancora aperti](recurring_gaps.md) — amendments Camera assente, amendments Senato dataset stale su DDL 2026, ddl_uri vuoto, search chamber-both bug, sindacato-ispettivo esito vuoto
-- [Pattern query Exa efficaci](exa_query_patterns.md) — query in italiano che trovano notizie con aggancio a dati verificabili (voti, comunicati di seduta, question time)
-- [Ricette CLI per domande giornalistiche](cli_recipes.md) — comandi pronti per voto su DDL, fiducia, relatore, dettaglio nominale, ricerca parlamentare
