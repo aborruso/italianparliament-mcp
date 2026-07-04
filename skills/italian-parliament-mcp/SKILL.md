@@ -68,7 +68,15 @@ The current legislature is **19** (XIX). Use it as default when the user does no
 
 Use `search` first to resolve a name to a URI before calling `deputy` or `senator`.
 
-### 4. Output format
+### 4. Keyword search: use the formal term
+
+`keyword` filters (on `bills`, `aic`, `committee-sessions`, …) do a **literal match** on the act's **formal title**, not a semantic search. Journalistic wording rarely matches the legal wording, so an empty result is almost always a lexical mismatch, **not** missing data.
+
+- Use the **normative term**: `elezione` not `elettorale`; `disabilità`/`portatori di handicap` not `fuorisede`.
+- Try **several synonyms and word roots** (e.g. `elett` → elettorale/elettori/elezione) before concluding. An empty result ≠ absent data — reformulate 2-3 times first.
+- **`sindacato-ispettivo` (Senato) is not searchable by topic**: the Senato LOD exposes no subject/text for these acts (only type, number, date, signatories). Don't promise thematic searches on it.
+
+### 5. Output format
 
 Tools return CSV or JSONL. For display, format results as markdown tables. For analysis, summarize key figures.
 

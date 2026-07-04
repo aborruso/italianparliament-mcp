@@ -92,6 +92,17 @@ italianparliament group-rank list --rank-by aic --legislature 19   # colonna cou
 | JSONL (default) | — | `jq`, streaming |
 | CSV | `--format csv` | spreadsheets, `duckdb`, `mlr` |
 
+## Ricerca testuale (`--keyword`)
+
+`--keyword` (su `bills`, `aic`, `committee-sessions`, ecc.) è un **match letterale** sul **titolo formale** dell'atto, non una ricerca semantica: cerca la stringa così com'è nel testo ufficiale. Il lessico giornalistico spesso **non coincide** con quello normativo, quindi un risultato vuoto è quasi sempre un mismatch di parole, **non** un dato assente.
+
+Regole d'oro:
+
+- **Usa il termine normativo, non quello giornalistico.** Es. `elezione` (non `elettorale`), `disabilità`/`portatori di handicap`, `sostegno` (non `fuorisede`/`fuori sede`). In dubbio, prova entrambi.
+- **Prova più sinonimi e radici di parola** prima di concludere. Preferisci la **radice** breve che copre più forme: `elett` → elettorale/elettori/elezione; `ambient` → ambiente/ambientale. Se il tool matcha a confini di parola (es. `aic --keyword`), usa più keyword separate.
+- **Vuoto ≠ assente.** Se non trovi nulla, riformula con un sinonimo o una radice prima di dire all'utente che il dato non c'è. Solo dopo 2-3 varianti fallite l'assenza è credibile.
+- **Sindacato ispettivo (Senato) non è ricercabile per argomento**: `sindacato-ispettivo --keyword` non filtra sull'oggetto perché il LOD Senato non espone l'oggetto/testo dell'atto (solo tipo, numero, data, firmatari). Il testo vive solo nella pagina HTML esterna. Non promettere ricerche tematiche su questo tool.
+
 ## Tips
 
 - Pipe CSV into `duckdb -c "SELECT ... FROM read_csv_auto('/dev/stdin')"` for SQL analysis
