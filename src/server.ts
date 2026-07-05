@@ -22,6 +22,7 @@ import { committeesTool } from "./tools/committees.js";
 import { billProgressTool } from "./tools/bill-progress.js";
 import { billSignatoriesTool } from "./tools/bill-signatories.js";
 import { billRapporteursTool } from "./tools/bill-rapporteurs.js";
+import { billCommitteesTool } from "./tools/bill-committees.js";
 import { amendmentsTool } from "./tools/amendments.js";
 import { cameraAmendmentsTool } from "./tools/camera-amendments.js";
 import { documentsTool } from "./tools/documents.js";
@@ -80,7 +81,7 @@ function makeHandler(tool: { execute(input: any): Promise<ToolResult> }) {
 export function createServer(): McpServer {
   return new McpServer({
     name: "italianparliament-mcp",
-    version: "0.14.1",
+    version: "0.15.0",
   });
 }
 
@@ -109,6 +110,7 @@ export function registerAll(server: McpServer): void {
     billProgressTool,
     billSignatoriesTool,
     billRapporteursTool,
+    billCommitteesTool,
     amendmentsTool,
     cameraAmendmentsTool,
     documentsTool,

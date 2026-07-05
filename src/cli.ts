@@ -23,6 +23,7 @@ import { billProgressTool } from "./tools/bill-progress.js";
 import { billSignatoriesTool } from "./tools/bill-signatories.js";
 import { cameraAmendmentsTool } from "./tools/camera-amendments.js";
 import { billRapporteursTool } from "./tools/bill-rapporteurs.js";
+import { billCommitteesTool } from "./tools/bill-committees.js";
 import { amendmentsTool } from "./tools/amendments.js";
 import { documentsTool } from "./tools/documents.js";
 import { sparqlTool } from "./tools/sparql.js";
@@ -788,6 +789,14 @@ const billProgressList = defineCommand({
       type: "string",
       description: "Search in DDL title (case-insensitive)",
     },
+    number: {
+      type: "string",
+      description: "Senato act number (e.g. 1809 for S.1809); pair with --branch",
+    },
+    branch: {
+      type: "string",
+      description: "Branch for --number: S (Senato, default) or C (Camera)",
+    },
     "date-from": {
       type: "string",
       description: "Presentation start date (YYYY-MM-DD)",
@@ -802,10 +811,16 @@ const billProgressList = defineCommand({
     format: { type: "string", default: "csv" },
   },
   async run({ args }) {
+    const branchRaw = (args.branch as string) || undefined;
+    if (branchRaw && branchRaw !== "S" && branchRaw !== "C") {
+      throw new Error("--branch must be S or C");
+    }
     const result = await runTool(billProgressTool, {
       ddlUri: (args["ddl-uri"] as string) || undefined,
       uri: (args.uri as string) || undefined,
       keyword: (args.keyword as string) || undefined,
+      number: (args.number as string) || undefined,
+      branch: branchRaw as "S" | "C" | undefined,
       dateFrom: (args["date-from"] as string) || undefined,
       dateTo: (args["date-to"] as string) || undefined,
       legislature: parseIntFlag(args.legislature as string, "legislature"),
@@ -856,6 +871,28 @@ const billRapporteursList = defineCommand({
   },
   async run({ args }) {
     const result = await runTool(billRapporteursTool, {
+      billUri: args["bill-uri"] as string,
+      limit: parseIntFlag(args.limit as string, "limit") ?? 100,
+    });
+    emit(result, parseFormat(args.format as string));
+  },
+});
+
+const billCommitteesList = defineCommand({
+  meta: {
+    name: "list",
+    description: withExamples(
+      "List committees a DDL/atto is assigned to (Camera or Senato, auto-detected from the URI).",
+      billCommitteesTool.examples,
+    ),
+  },
+  args: {
+    "bill-uri": { type: "string", description: "Full URI of a DDL/atto (Camera or Senato)", required: true },
+    limit: { type: "string", default: "100" },
+    format: { type: "string", default: "csv" },
+  },
+  async run({ args }) {
+    const result = await runTool(billCommitteesTool, {
       billUri: args["bill-uri"] as string,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
     });
@@ -1431,6 +1468,7 @@ const CAPABILITIES: { cmd: string; terms: string[]; desc: string }[] = [
   { cmd: "people resolve", terms: ["nome", "nomi", "risolvi uri", "chi è", "uri persona", "nominativo", "batch"], desc: "Risolve URI persona (Camera+Senato) ai nomi, in batch" },
   { cmd: "bill-progress list", terms: ["iter", "ddl senato", "stato ddl", "iter camera", "timeline atto"], desc: "Iter dei DDL al Senato; con --uri <atto Camera> la timeline iter della Camera" },
   { cmd: "bill-rapporteurs list", terms: ["relatore", "relatori", "relatrice", "chi relaziona"], desc: "Relatori di un DDL (Camera o Senato, dall'URI)" },
+  { cmd: "bill-committees list", terms: ["commissione", "commissioni", "assegnazione", "assegnato", "sede referente", "sede consultiva"], desc: "Commissioni a cui un DDL/atto è assegnato (Camera o Senato, dall'URI)" },
   { cmd: "bill-text links / fetch", terms: ["testo", "articolato", "pdf", "testo ddl", "contenuto legge"], desc: "Link al testo di un DDL e download/conversione (Senato)" },
   { cmd: "amendments list", terms: ["emendamenti", "ostruzionismo"], desc: "Emendamenti Senato (--ddl-uri per un DDL)" },
   { cmd: "committee-sessions list", terms: ["commissione", "sedute", "lavori commissione", "attività commissione", "follow commissione", "bollettini commissione"], desc: "Attività delle commissioni: iter di un DDL (--ddl-uri) o sedute di una commissione per data (--committee-uri/--committee-name + --chamber, Camera+Senato)" },
@@ -1606,6 +1644,10 @@ const main = defineCommand({
     "bill-rapporteurs": defineCommand({
       meta: { name: "bill-rapporteurs", description: "Rapporteurs of a DDL (Camera or Senato)" },
       subCommands: { list: billRapporteursList },
+    }),
+    "bill-committees": defineCommand({
+      meta: { name: "bill-committees", description: "Committees a DDL/atto is assigned to (Camera or Senato)" },
+      subCommands: { list: billCommitteesList },
     }),
     amendments: defineCommand({
       meta: { name: "amendments", description: "Senato amendments" },

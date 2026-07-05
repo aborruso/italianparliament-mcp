@@ -21,6 +21,7 @@ import { committeesTool } from "./committees.js";
 import { billProgressTool } from "./bill-progress.js";
 import { billSignatoriesTool } from "./bill-signatories.js";
 import { billRapporteursTool } from "./bill-rapporteurs.js";
+import { billCommitteesTool } from "./bill-committees.js";
 import { amendmentsTool } from "./amendments.js";
 import { cameraAmendmentsTool } from "./camera-amendments.js";
 import { documentsTool } from "./documents.js";
@@ -64,6 +65,7 @@ export const tools: Tool[] = [
   billProgressTool,
   billSignatoriesTool,
   billRapporteursTool,
+  billCommitteesTool,
   amendmentsTool,
   cameraAmendmentsTool,
   documentsTool,
@@ -111,6 +113,7 @@ export {
   billProgressTool,
   billSignatoriesTool,
   billRapporteursTool,
+  billCommitteesTool,
   amendmentsTool,
   cameraAmendmentsTool,
   documentsTool,

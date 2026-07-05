@@ -86,6 +86,8 @@ Iter di un disegno di legge, Camera o Senato (stesse colonne in entrambi i casi)
   - `legislature`: numero legislatura
   - `ddlUri`: singolo DDL Senato
   - `keyword`: cerca nel titolo del DDL
+  - `number`: numero dell'atto (es. `1809` → S.1809), da abbinare a `branch`
+  - `branch`: ramo per `number`, `S` (Senato, default) o `C` (Camera) — lo stesso numero può esistere in entrambi (C.1809 e S.1809)
   - `dateFrom`/`dateTo`: intervallo data presentazione
 - **Camera** (`uri` = atto Camera `attocamera.rdf/...`): timeline completa di tutti gli stati attraversati, in ordine cronologico.
 
@@ -96,6 +98,10 @@ Firmatari di un DDL, **Camera o Senato** (il ramo è riconosciuto dall'URI): pri
 ### `bill-rapporteurs`
 Relatori di un DDL, **Camera o Senato** (il ramo è riconosciuto dall'URI). Nome, tipo (Relatore / f.f.), commissione/organo e data.
 - `billUri` (required): URI del DDL (Camera `attocamera.rdf/...` o Senato `ddl/...`)
+
+### `bill-committees`
+Commissioni a cui un DDL/atto è assegnato, **Camera o Senato** (il ramo è riconosciuto dall'URI). Nome commissione, `role` (sede/ruolo: Referente, Consultiva, Redigente, Deliberante), tipo, data di assegnazione e URI dell'organo.
+- `billUri` (required): URI del DDL/atto (Camera `attocamera.rdf/...` o Senato `ddl/...`)
 
 ### `amendments`
 Emendamenti Senato con DDL collegato.

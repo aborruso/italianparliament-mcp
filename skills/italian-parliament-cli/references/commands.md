@@ -116,12 +116,15 @@ italianparliament speeches list --legislature 19
 ## Attività legislativa — Senato
 
 ### `bill-progress list`
-Iter di un disegno di legge. **Senato** (senza `--uri`): lista DDL con stato corrente, filtrabile per legislatura, `--keyword`, `--date-from`/`--date-to`, o per singolo DDL con `--ddl-uri`. **Camera** (con `--uri <atto Camera>`): timeline completa di tutti gli stati attraversati, in ordine cronologico. Stesse colonne in entrambi i casi.
+Iter di un disegno di legge. **Senato** (senza `--uri`): lista DDL con stato corrente, filtrabile per legislatura, `--keyword`, `--number <n>` (+ `--branch S|C`, default `S`) per cercare un atto dal suo numero (es. `--number 1809` → S.1809), `--date-from`/`--date-to`, o per singolo DDL con `--ddl-uri`. **Camera** (con `--uri <atto Camera>`): timeline completa di tutti gli stati attraversati, in ordine cronologico. Stesse colonne in entrambi i casi.
 ```bash
 italianparliament bill-progress list --legislature 19
+italianparliament bill-progress list --number 1809 --branch S --legislature 19
 italianparliament bill-progress list --ddl-uri http://dati.senato.it/ddl/25597
 italianparliament bill-progress list --uri http://dati.camera.it/ocd/attocamera.rdf/ac19_2822
 ```
+
+> Nota: lo stesso numero può esistere in entrambi i rami (`C.1809` e `S.1809`), perciò `--branch` è obbligatorio per disambiguare (default `S`).
 
 ### `bill-signatories show`
 Firmatari di un DDL, **Camera o Senato** (riconosciuto dall'URI): primo firmatario e cofirmatari con nome e link al profilo.
@@ -135,6 +138,13 @@ Relatori di un DDL, **Camera o Senato** (riconosciuto dall'URI): nome, tipo (Rel
 ```bash
 italianparliament bill-rapporteurs list --bill-uri http://dati.camera.it/ocd/attocamera.rdf/ac19_2807
 italianparliament bill-rapporteurs list --bill-uri http://dati.senato.it/ddl/59313
+```
+
+### `bill-committees list`
+Commissioni a cui un DDL/atto è assegnato, **Camera o Senato** (riconosciuto dall'URI): nome commissione, `role` (sede/ruolo: Referente, Consultiva, Redigente, Deliberante), tipo, data di assegnazione e URI dell'organo.
+```bash
+italianparliament bill-committees list --bill-uri http://dati.senato.it/ddl/59924
+italianparliament bill-committees list --bill-uri http://dati.camera.it/ocd/attocamera.rdf/ac19_2822
 ```
 
 ### `amendments list`

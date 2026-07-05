@@ -23,6 +23,17 @@ const inputSchema = z.object({
     .string()
     .optional()
     .describe("Cerca nel titolo del DDL (match case-insensitive, es. 'autonomia', 'lavoro')"),
+  number: z
+    .string()
+    .regex(/^\d+$/)
+    .optional()
+    .describe(
+      "Numero dell'atto Senato (es. 1809 per S.1809). Da abbinare a --branch per il ramo. Lo stesso numero può esistere in entrambi i rami (C.1809 e S.1809).",
+    ),
+  branch: z
+    .enum(["S", "C"])
+    .optional()
+    .describe("Ramo per --number: S (Senato, default) o C (Camera)."),
   dateFrom: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -61,10 +72,11 @@ const columns = [
 export const billProgressTool: Tool<typeof inputSchema> = {
   name: "bill-progress",
   description:
-    "Iter legislativo di un disegno di legge. [SENATO] senza --uri: lista DDL al Senato con stato corrente dell'iter (assegnato, esame in commissione, approvato, ecc.), filtrabile per legislatura, parola chiave nel titolo e intervallo date. [CAMERA] con --uri <atto Camera>: cronologia completa (timeline) di tutti gli stati attraversati dall'atto, in ordine cronologico. Stesse colonne in entrambi i casi.",
+    "Iter legislativo di un disegno di legge. [SENATO] senza --uri: lista DDL al Senato con stato corrente dell'iter (assegnato, esame in commissione, approvato, ecc.), filtrabile per legislatura, numero atto (--number, es. 1809 per S.1809, con --branch S|C), parola chiave nel titolo e intervallo date. [CAMERA] con --uri <atto Camera>: cronologia completa (timeline) di tutti gli stati attraversati dall'atto, in ordine cronologico. Stesse colonne in entrambi i casi.",
   inputSchema,
   examples: [
     "italianparliament bill-progress list --legislature 19 --limit 20",
+    "italianparliament bill-progress list --number 1809 --branch S --legislature 19",
     "italianparliament bill-progress list --ddl-uri http://dati.senato.it/ddl/25597",
     "italianparliament bill-progress list --legislature 19 --keyword autonomia --limit 20",
     "italianparliament bill-progress list --legislature 19 --date-from 2026-04-01 --date-to 2026-04-13",
@@ -98,6 +110,13 @@ export const billProgressTool: Tool<typeof inputSchema> = {
     if (input.keyword) {
       const escaped = input.keyword.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
       filters.push(`FILTER(CONTAINS(LCASE(STR(?titolo)), LCASE("${escaped}")))`);
+    }
+    if (input.number) {
+      // numeroFase è tipizzato → confronto via STR(); il ramo (osr:ramo S/C) è
+      // obbligatorio perché lo stesso numero esiste in entrambi (C.1809 e S.1809).
+      const branch = input.branch ?? "S";
+      filters.push(`FILTER(STR(?numeroFase) = "${input.number}")`);
+      filters.push(`?s osr:ramo ?ramoFiltro . FILTER(STR(?ramoFiltro) = "${branch}")`);
     }
     if (input.legislature) {
       filters.push(`?s osr:legislatura ${input.legislature} .`);

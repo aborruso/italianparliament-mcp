@@ -88,6 +88,7 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 | `votes list` | Votazioni Camera con contatori (favorevoli, contrari, astenuti), filtrabile per data, tipo fiducia (`--confidence-vote`), DDL collegato (`--bill-code`) |
 | `vote-detail show` | Come ha votato ogni singolo deputato in una votazione, con nome e gruppo |
 | `bill-rapporteurs list` | Relatori di un DDL (Camera o Senato, riconosciuti dall'URL): nome, tipo (Relatore / f.f.), commissione/organo e data |
+| `bill-committees list` | Commissioni a cui un DDL/atto è assegnato (Camera o Senato, dall'URL): nome, sede/ruolo (Referente, Consultiva, …), tipo, data di assegnazione, URI organo |
 | `camera-amendments list` | Emendamenti (proposte emendative) a un atto Camera, per sede (referente/Assemblea): numero, articolo, primo firmatario, emendamenti identici, link al testo; `--count-only` per il conteggio per sede. Gli emendamenti Camera non sono nel LOD: la fonte è l'app HTML `documenti.camera.it` (per il Senato usare `amendments`) |
 | `speeches list` | Interventi in aula, filtrabile per legislatura e deputato |
 
@@ -95,7 +96,7 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 
 | Comando | Cosa fa |
 |---------|---------|
-| `bill-progress list` | Iter dei DDL: al Senato stato/date/iniziativa/natura (lista o per `--ddl-uri`); con `--uri <atto Camera>` restituisce la timeline completa dell'iter alla Camera (tutti gli stati attraversati, con data) |
+| `bill-progress list` | Iter dei DDL: al Senato stato/date/iniziativa/natura (lista, per `--ddl-uri`, o per numero con `--number <n>` + `--branch S\|C`); con `--uri <atto Camera>` restituisce la timeline completa dell'iter alla Camera (tutti gli stati attraversati, con data) |
 | `bill-signatories show` | Firmatari di un DDL (Camera o Senato): primo firmatario e cofirmatari |
 | `amendments list` | Emendamenti al Senato con numero, tipo, DDL collegato e link al testo. Filtrabile per legislatura e per DDL (`--ddl-uri`) |
 | `documents list` | Documenti parlamentari: atti del governo, atti UE, relazioni Corte dei Conti |
