@@ -4,7 +4,7 @@ description: Query Italian Parliament open data (Camera dei Deputati and Senato 
 compatibility: Requires italianparliament-mcp MCP server configured in Claude Desktop or Claude Code
 metadata:
   author: aborruso
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Italian Parliament MCP Skill
@@ -106,6 +106,14 @@ Use `rank` with `rankBy`: `aic-primo-firmatario`, `aic-cofirmatario`, `bills-pri
 1. `senato-votes` → get vote URI (filter by `ddlUri` for votes on a bill, or by date)
 2. `senato-vote-detail` with the URI. Each row includes the senator's `group_label` at the vote date, so the group breakdown comes directly (no need to cross-reference).
 
+**Iter completo di una legge (Camera → Senato → pubblicazione)**
+Non generare la timeline a memoria: costruiscila dai tool, passo per passo. `bill-progress` è la spina dorsale.
+1. `bills` con `keyword` → individua l'atto Camera (URI, es. `ac19_2911`).
+2. `bill-progress` con `uri` = atto Camera → iter con le **date reali** di ogni fase (assegnazione, esame in commissione, approvazione/trasmissione, approvazione definitiva, legge).
+3. Aggancia il DDL Senato **per numero, mai per keyword**: dalla progress ricavi il numero Senato, poi `bill-progress` con `number` + `branch: S` → ottieni il `ddlUri` (es. `dati.senato.it/ddl/60201`). Evita di pescare un DDL omonimo diverso.
+4. Voti: Senato `senato-votes` con `ddlUri` (+ caveat fiducia sotto). Camera `votes`: se `keyword`/numero non trova il **voto finale** o la **fiducia**, filtra per **intervallo di date** attorno alla trasmissione e leggi `vote-detail`, invece di dedurre il conteggio.
+5. Contenuto: `bill-text` — il testo **non** è nei metadati; se non lo recuperi, non descrivere il contenuto della legge.
+
 **Obiettivi giornalistici derivabili senza tool dedicato**
 Alcune analisi ricorrenti (es. i **dissidenti/ribelli** che votano contro la linea del proprio gruppo) non hanno un tool dedicato ma si ricavano combinando i tool esistenti. Vedi [obiettivi giornalistici](references/obiettivi-giornalistici.md) per le ricette (ingredienti, passi, scelte analitiche, limiti).
 
@@ -119,3 +127,12 @@ The full text is **not** in the SPARQL data — only metadata. `bill-text` retur
 3. `auth=browser` (Senato): `www.senato.it` is behind AWS WAF, so a plain fetch returns HTTP 202. Either let a browser-capable orchestrator open the URL, or use the local CLI `italianparliament bill-text fetch --did <N>` which drives a real browser to clear the WAF, downloads the PDF, and converts it to markdown with `lit`. Use `--which "Relazione"` to pick a specific text, `--all` for every text, `--fascicolo` for the full iter dossier.
 
 The `did` is the number `<N>` in the Senato DDL URI (`dati.senato.it/ddl/<N>`), same as `?did=` in the scheda URL.
+
+## Grounding (non inventare)
+
+Ricostruendo iter, voti o schede il rischio è la **confabulazione su scheletro reale**: partire da un dato corretto e riempire i buchi con valori plausibili ma falsi (voti, date, firmatari, contenuti). I tool restituiscono il dato giusto; il difetto nasce da come li si combina e interpreta. Regole:
+
+- **Riporta solo ciò che un tool ha restituito.** Se un voto, un firmatario, una data o un contenuto non è nell'output, dì "non disponibile" — non completare con numeri o nomi verosimili.
+- **Aggancia gli atti per identificatore, non per keyword.** Il DDL Senato di un atto Camera va risolto per numero (`bill-progress` con `number` + `branch: S`), così non si confondono atti omonimi.
+- **Distingui "Dato" (da tool) da "Sintesi/interpretazione" (tua).** Le deduzioni (es. entrata in vigore calcolata, sigle di gruppo espanse) vanno dichiarate come tali.
+- **Cita per riga**: l'URL della votazione/atto/scheda accanto al dato, non un'unica fonte cumulativa in fondo.
