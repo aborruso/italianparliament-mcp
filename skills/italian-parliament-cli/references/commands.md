@@ -152,6 +152,13 @@ italianparliament amendments list --legislature 19
 italianparliament amendments list --ddl-uri http://dati.senato.it/ddl/56260 --format jsonl
 ```
 
+### `camera-amendments list`
+Emendamenti (proposte emendative) a un atto **Camera**, per sede (referente/Assemblea): numero, articolo, primo firmatario, emendamenti identici, link al testo. `--count-only` per il conteggio per sede. Fonte: app HTML `documenti.camera.it` (gli emendamenti Camera non sono nel LOD); per il Senato usare `amendments`.
+```bash
+italianparliament camera-amendments list --bill-uri http://dati.camera.it/ocd/attocamera.rdf/ac19_2696 --count-only
+italianparliament camera-amendments list --bill-uri http://dati.camera.it/ocd/attocamera.rdf/ac19_2696 --format jsonl
+```
+
 ### `sindacato-ispettivo list`
 Atti di sindacato ispettivo Senato.
 ```bash

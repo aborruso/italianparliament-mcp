@@ -86,6 +86,7 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 | `votes list` | Votazioni Camera con contatori (favorevoli, contrari, astenuti), filtrabile per data, tipo fiducia (`--confidence-vote`), DDL collegato (`--bill-code`) |
 | `vote-detail show` | Come ha votato ogni singolo deputato in una votazione, con nome e gruppo |
 | `bill-rapporteurs list` | Relatori di un DDL (Camera o Senato, riconosciuti dall'URL): nome, tipo (Relatore / f.f.), commissione/organo e data |
+| `camera-amendments list` | Emendamenti (proposte emendative) a un atto Camera, per sede (referente/Assemblea): numero, articolo, primo firmatario, emendamenti identici, link al testo; `--count-only` per il conteggio per sede. Gli emendamenti Camera non sono nel LOD: la fonte è l'app HTML `documenti.camera.it` (per il Senato usare `amendments`) |
 | `speeches list` | Interventi in aula, filtrabile per legislatura e deputato |
 
 ### Attivita legislativa — Senato
@@ -400,6 +401,7 @@ I dati provengono dagli endpoint SPARQL ufficiali di Camera e Senato. Alcune lim
 - **Feed RSS iter** (`rss_url`): i tool sui DDL del Senato (`amendments`, `senato-votes`, `bill-progress`) espongono `rss_url`, il feed RSS con l'iter dettagliato del DDL (fasi, sedute, voto finale, esiti).
 - **Gruppi** (`groups`): l'acronimo viene dal campo `dcterms:alternative` dell'endpoint (es. `AVS`, `PD-IDP`); per i rari casi senza quel campo si ricava dalla label.
 - **Documenti Camera**: l'endpoint Camera non espone documenti parlamentari via SPARQL. Il tool `documents` usa i dati del Senato.
+- **Emendamenti Camera** (`camera-amendments`): a differenza del Senato (`amendments`, da SPARQL), gli emendamenti della Camera non sono nel LOD. Questo tool li ricava dall'app HTML `documenti.camera.it/apps/emendamenti` tramite scraping: la fonte è HTML, quindi il tool dipende dalla struttura delle pagine (test-sentinella fissano i conteggi noti per intercettare cambi di markup). L'esito del voto sul singolo emendamento non è incluso (vive nella vista per-seduta della fonte).
 - **Voti di fiducia al Senato** (`senato-votes`): nei dati il legame col DDL (`osr:oggetto`) **manca** per le fiducie — il numero è scritto solo nel testo della `label` (es. "Disegno di legge n.1933. Votazione questione di fiducia."). Da **v0.8.0** i tool colmano il vuoto: la colonna `bill_number` riporta il numero e `ddl_uri` viene **risolto in fallback** dal numero (via `osr:fase`), così le fiducie tornano linkate al DDL. Nota: `senato-votes list --ddl-uri <uri>` filtra ancora sul legame diretto e quindi **non** restituisce le fiducie — per quelle usare `bill_number`/`ddl_uri` in output o filtrare per data seduta. Attenzione alle votazioni "finali" trovate per data: possono appartenere a un atto diverso (testo unificato) — verificare `bill_number`/`ddl_uri`. Analogo alla Camera per i voti senza `rif_attoCamera` (colonne `bill_number`/`bill_uri`).
 
 ## Riferimento

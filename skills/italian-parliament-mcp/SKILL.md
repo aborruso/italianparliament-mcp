@@ -51,6 +51,7 @@ See [tool reference](references/tools.md) for the full list with parameters and 
 | Votazioni Senato | `senato-votes` / `senato-vote-detail` |
 | Interventi in aula | `speeches` |
 | Emendamenti Senato | `amendments` |
+| Emendamenti Camera (proposte emendative) | `camera-amendments` |
 | Documenti parlamentari Senato | `documents` |
 | Governi e ministri | `governments` / `gov-members` |
 | Legislature | `legislatures` |

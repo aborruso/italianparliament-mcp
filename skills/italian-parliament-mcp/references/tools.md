@@ -1,6 +1,6 @@
 # Tool Reference — italianparliament-mcp
 
-38 tool. Colonne trasversali nell'output:
+39 tool. Colonne trasversali nell'output:
 - **`html_url`**: link alla scheda istituzionale su `camera.it`/`senato.it`, accanto all'URI SPARQL. Presente sui tool che restituiscono persone (`deputies`, `senators`, `search`, `group-members`, `senator-group-members`, `rank`, `vote-detail`, `senato-vote-detail`, `people`...) e atti/DDL (`bills`, `bill`, `member-bills`, `bill-signatories`, `bill-rapporteurs`, `amendments`, `senato-votes`, `bill-progress`...).
 - **`rss_url`**: feed RSS con l'iter dettagliato del DDL (fasi, sedute, voto finale). Presente sui tool DDL del Senato (`amendments`, `senato-votes`, `bill-progress`).
 
@@ -101,6 +101,11 @@ Relatori di un DDL, **Camera o Senato** (il ramo è riconosciuto dall'URI). Nome
 Emendamenti Senato con DDL collegato.
 - `legislature`: numero legislatura
 - `ddlUri`: filtra gli emendamenti a un DDL specifico
+
+### `camera-amendments`
+Emendamenti (proposte emendative) a un atto **Camera**, per sede (referente/Assemblea). Fonte: app HTML `documenti.camera.it` (gli emendamenti Camera non sono nel LOD), via scraping. Output per emendamento: `sede`, `article`, `number`, `first_signatory`, `person_id`, `identical`, `text_url`.
+- `billUri` (required): URI atto Camera (es. `http://dati.camera.it/ocd/attocamera.rdf/ac19_2696`)
+- `countOnly`: solo il conteggio per sede
 
 ### `sindacato-ispettivo`
 Atti di sindacato ispettivo Senato (interrogazioni, interpellanze).
