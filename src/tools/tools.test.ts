@@ -287,6 +287,16 @@ describe("Senato tools", () => {
     expect(result.rows[0].legislature).toBe("19");
   }, 30000);
 
+  it("amendments: rejects a Camera ddlUri instead of returning empty (offline guard)", async () => {
+    await expect(
+      amendmentsTool.execute({
+        ddlUri: "http://dati.camera.it/ocd/attocamera.rdf/ac19_2696",
+        limit: 100,
+        offset: 0,
+      }),
+    ).rejects.toThrow(/solo-Senato/);
+  });
+
   it("documents: returns documents for legislature 19", async () => {
     const result = await documentsTool.execute({ legislature: 19, limit: 3, offset: 0 });
     expect(result.rows.length).toBe(3);

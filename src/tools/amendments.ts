@@ -16,7 +16,10 @@ const inputSchema = z.object({
     .string()
     .url()
     .optional()
-    .describe("Filtra gli emendamenti a un DDL specifico (es. http://dati.senato.it/ddl/56260)"),
+    .describe(
+      "Filtra gli emendamenti a un DDL Senato specifico (es. http://dati.senato.it/ddl/56260). " +
+        "Solo Senato: gli emendamenti della Camera non sono nel LOD.",
+    ),
   limit: z.number().int().min(1).max(1000).default(100),
   offset: z.number().int().min(0).default(0),
 });
@@ -44,6 +47,21 @@ export const amendmentsTool: Tool<typeof inputSchema> = {
     "italianparliament amendments list --legislature 18 --format jsonl",
   ],
   async execute(input) {
+    // amendments interroga solo l'endpoint Senato: un ddlUri della Camera
+    // passerebbe il FILTER senza match, restituendo un CSV vuoto che si può
+    // scambiare per "nessun emendamento". In realtà gli emendamenti della
+    // Camera NON esistono come entità nel LOD OCD (nessuna classe emendamento):
+    // l'unica traccia è testuale nelle descrizioni delle votazioni. Blocchiamo
+    // esplicitamente per non trarre in inganno.
+    if (input.ddlUri && !input.ddlUri.includes("dati.senato.it")) {
+      throw new Error(
+        `amendments è un tool solo-Senato: l'URI "${input.ddlUri}" non è del Senato ` +
+          `(atteso http://dati.senato.it/ddl/...). Gli emendamenti della Camera NON sono ` +
+          `pubblicati nel LOD come entità: l'unica traccia è testuale nelle descrizioni ` +
+          `delle votazioni (usa il tool votes e filtra la descrizione). Un risultato vuoto ` +
+          `qui non significa assenza di emendamenti alla Camera.`,
+      );
+    }
     const legFilter = input.legislature
       ? `?s osr:legislatura ${input.legislature} .`
       : "";
