@@ -82,6 +82,7 @@ code { font-family: var(--mono); font-size: 0.85em; color: var(--gold-hi); }
 }
 .sky-tooltip .tt-group { color: var(--gold-hi); }
 .sky-tooltip .tt-chamber { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.62rem; }
+.sky-tooltip .tt-open { color: var(--ok); font-size: 0.62rem; }
 
 .hero-copy {
   position: relative;

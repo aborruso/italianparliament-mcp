@@ -195,7 +195,7 @@ function layoutSky() {
           phase: rand() * Math.PI * 2,
           speed: 0.4 + rand() * 1.1,
           color,
-          name: m.name, group: label, chamber,
+          name: m.name, group: label, chamber, url: m.url || "",
         };
         sky.stars.push(star);
         return star;
@@ -284,20 +284,27 @@ function skyLoop(time) {
   requestAnimationFrame(skyLoop);
 }
 
-/* tooltip: stella più vicina al puntatore */
+/* tooltip + click: stella più vicina al puntatore */
+function nearestStar(e) {
+  const rect = sky.canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let best = null, bd = 14 * 14;
+  for (const s of sky.stars) {
+    const d = (s.x - mx) ** 2 + (s.y - my) ** 2;
+    if (d < bd) { bd = d; best = s; }
+  }
+  return best;
+}
+
 function initSkyTooltip() {
   const tip = document.getElementById("sky-tooltip");
   sky.canvas.addEventListener("pointermove", (e) => {
-    const rect = sky.canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    let best = null, bd = 14 * 14;
-    for (const s of sky.stars) {
-      const d = (s.x - mx) ** 2 + (s.y - my) ** 2;
-      if (d < bd) { bd = d; best = s; }
-    }
+    const best = nearestStar(e);
+    sky.canvas.style.cursor = best && best.url ? "pointer" : "crosshair";
     if (best) {
       tip.hidden = false;
-      tip.innerHTML = `<span class="tt-chamber">${best.chamber}</span><br>${best.name}<br><span class="tt-group">${best.group}</span>`;
+      tip.innerHTML = `<span class="tt-chamber">${best.chamber}</span><br>${best.name}<br><span class="tt-group">${best.group}</span>`
+        + (best.url ? `<br><span class="tt-open">clic → scheda ufficiale ↗</span>` : "");
       tip.style.left = Math.min(e.clientX + 14, innerWidth - 280) + "px";
       tip.style.top = e.clientY + 14 + "px";
     } else {
@@ -305,6 +312,10 @@ function initSkyTooltip() {
     }
   });
   sky.canvas.addEventListener("pointerleave", () => (tip.hidden = true));
+  sky.canvas.addEventListener("click", (e) => {
+    const best = nearestStar(e);
+    if (best && best.url) window.open(best.url, "_blank", "noopener");
+  });
 }
 
 /* ---------------- caricamento cielo + contatori ---------------- */
@@ -338,10 +349,10 @@ async function loadSky() {
 
   const deputies = latestMembership(cam, "deputy_uri")
     .filter((r) => !r.end_date)
-    .map((r) => ({ name: r.deputy_name, group: r.group_label }));
+    .map((r) => ({ name: r.deputy_name, group: r.group_label, url: r.html_url }));
   const senators = latestMembership(sen, "senator_uri")
     .filter((r) => !r.end_date)
-    .map((r) => ({ name: r.senator_name, group: r.group_label }));
+    .map((r) => ({ name: r.senator_name, group: r.group_label, url: r.html_url }));
 
   sky.raw = { camera: deputies, senato: senators };
   layoutSky();
