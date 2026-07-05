@@ -9,7 +9,9 @@ Endpoint SPARQL: `https://dati.senato.it/sparql`. Ontologia OSR (namespace `http
 # Query template
 
 * [Collegare una Votazione al suo DDL](votazione-ddl-link.md) - link parziale; fallback dal numero nel label via `osr:fase="S.<num>"`.
+* [Firmatari di un DDL — osr:iniziativa e primoFirmatario](firmatari-iniziativa.md) - il flag `osr:primoFirmatario` NON è mutuamente esclusivo: per gli atti di governo vale su più presentatori (Presidente del Consiglio + ministro competente; fino a tutti i ministri per i decreti collegiali).
 
 # Entità
 
 * [Sedute e attività delle commissioni](sedute-commissione.md) - `osr:SedutaCommissione` per commissione e per data; proprietà reali (`osr:dataSeduta`, `osr:titoloBreve`) e trappola doppia etichetta.
+* [Emendamenti — firmatario assente dal LOD](emendamenti-firmatario.md) - `osr:Emendamento` esiste nel LOD ma **senza** firmatario; il proponente sta solo nel testo AKN (`osr:URLTestoXml`), dietro WAF. Asimmetria di tooling con `camera-amendments`.

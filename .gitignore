@@ -28,3 +28,8 @@ docs/news-agent/
 
 # memoria orfana agente (ogni run è vergine)
 .claude/agent-memory/
+
+# skill di terze parti installate via skill-manager (non parte del progetto)
+.agents/
+.claude/skills/
+skills-lock.json

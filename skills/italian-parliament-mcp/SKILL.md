@@ -4,7 +4,7 @@ description: Query Italian Parliament open data (Camera dei Deputati and Senato 
 compatibility: Requires italianparliament-mcp MCP server configured in Claude Desktop or Claude Code
 metadata:
   author: aborruso
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Italian Parliament MCP Skill
@@ -105,6 +105,9 @@ Use `rank` with `rankBy`: `aic-primo-firmatario`, `aic-cofirmatario`, `bills-pri
 **Who voted how (Senato)**
 1. `senato-votes` → get vote URI (filter by `ddlUri` for votes on a bill, or by date)
 2. `senato-vote-detail` with the URI. Each row includes the senator's `group_label` at the vote date, so the group breakdown comes directly (no need to cross-reference).
+
+**Obiettivi giornalistici derivabili senza tool dedicato**
+Alcune analisi ricorrenti (es. i **dissidenti/ribelli** che votano contro la linea del proprio gruppo) non hanno un tool dedicato ma si ricavano combinando i tool esistenti. Vedi [obiettivi giornalistici](references/obiettivi-giornalistici.md) per le ricette (ingredienti, passi, scelte analitiche, limiti).
 
 > **Confidence votes caveat:** `senato-votes list --ddlUri <uri>` does **not** return a *fiducia* — the `ddlUri` field is empty for confidence votes; the bill link is only in the `label` text (e.g. "Disegno di legge n.1933. Votazione questione di fiducia."). Filter by **seduta date** (`--dateFrom`/`--dateTo`), then match the DDL via `label`. Also verify `ddlUri` on any "final" vote found by date: it may belong to a different act (unified text).
 

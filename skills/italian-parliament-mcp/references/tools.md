@@ -15,12 +15,20 @@ Cerca un parlamentare per nome in Camera, Senato o entrambi.
 ### `deputies`
 Lista deputati Camera.
 - `legislature`: numero legislatura (default: 19)
+- `region`: circoscrizione/regione di elezione (case-insensitive)
+- `gender`: `male` | `female`
+- `bornFrom` / `bornTo`: intervallo data di nascita (YYYY-MM-DD)
+- `birthPlace`: luogo di nascita — comune/provincia/regione/stato (la gerarchia è nell'URI del luogo Camera). In output `birth_place` è lo slug `comune_provincia_regione`.
 - `limit`: max risultati (default: 100)
 - `format`: `csv` | `jsonl`
 
 ### `senators`
 Lista senatori.
 - `legislature`: numero legislatura (default: 19)
+- `activeOnly`: solo in carica
+- `gender`: `male` | `female`
+- `bornFrom` / `bornTo`: intervallo data di nascita (YYYY-MM-DD)
+- `birthPlace`: **solo città** di nascita (il Senato non espone provincia/regione)
 
 ### `deputy`
 Scheda di un deputato.

@@ -27,15 +27,18 @@ Comandi di scoperta (`guide`, `which`, `--help`) documentati nel SKILL.
 ## Parlamentari
 
 ### `deputies list`
-Lista deputati Camera.
+Lista deputati Camera. Filtri: `--region`, `--gender male|female`, `--born-from`/`--born-to` (YYYY-MM-DD), `--birth-place` (comune/provincia/regione/stato — la gerarchia è nell'URI del luogo). `birth_place` in output è lo slug `comune_provincia_regione` (es. `messina_messina_sicilia`).
 ```bash
 italianparliament deputies list --legislature 19 --limit 100 --format csv
+italianparliament deputies list --legislature 19 --gender female --birth-place sicilia
+italianparliament deputies list --legislature 19 --born-from 1990-01-01
 ```
 
 ### `senators list`
-Lista senatori.
+Lista senatori. Filtri: `--active-only`, `--gender male|female`, `--born-from`/`--born-to` (YYYY-MM-DD), `--birth-place` (**solo città** — il Senato non espone provincia/regione di nascita).
 ```bash
 italianparliament senators list --legislature 19
+italianparliament senators list --legislature 19 --gender female --born-from 1980-01-01
 ```
 
 ### `search find`

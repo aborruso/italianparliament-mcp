@@ -37,6 +37,41 @@ describe("Camera tools", () => {
     expect(result.rows[0]).toHaveProperty("last_name");
   }, 30000);
 
+  it("deputies: demographic filters (gender + birthplace) constrain output", async () => {
+    // Deputate leg.19 nate in Sicilia. Alla Camera birth_place NON è la città ma
+    // lo slug dell'URI del luogo `comune_provincia_regione` (es.
+    // "messina_messina_sicilia"): la regione è codificata lì, ed è ciò che rende
+    // filtrabile la regione di nascita (a differenza del Senato, solo città).
+    const result = await deputiesTool.execute({
+      legislature: 19,
+      gender: "female",
+      birthPlace: "sicilia",
+      limit: 100,
+      offset: 0,
+    });
+    expect(result.rows.length).toBeGreaterThan(0);
+    for (const r of result.rows) {
+      expect(r.gender).toBe("female");
+      // slug comune_provincia_regione che termina con la regione filtrata
+      expect(r.birth_place).toMatch(/_sicilia$/);
+      expect(r.birth_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  }, 30000);
+
+  it("deputies: born-from/born-to bound the birth date", async () => {
+    const result = await deputiesTool.execute({
+      legislature: 19,
+      bornFrom: "1990-01-01",
+      bornTo: "1999-12-31",
+      limit: 100,
+      offset: 0,
+    });
+    expect(result.rows.length).toBeGreaterThan(0);
+    for (const r of result.rows) {
+      expect(r.birth_date >= "1990-01-01" && r.birth_date <= "1999-12-31").toBe(true);
+    }
+  }, 30000);
+
   it("legislatures: returns all legislatures", async () => {
     const result = await legislaturesTool.execute({});
     expect(result.rows.length).toBeGreaterThan(30);
@@ -182,6 +217,34 @@ describe("Senato tools", () => {
     expect(result.rows.length).toBe(3);
     expect(result.rows[0]).toHaveProperty("first_name");
     expect(result.rows[0]).toHaveProperty("last_name");
+  }, 30000);
+
+  it("senators: gender filter uses STR() (foaf:gender is typed → F/M)", async () => {
+    // Regressione: al Senato foaf:gender è un letterale tipizzato, quindi
+    // il confronto diretto ?gen="F" dà 0; serve STR(?gen).
+    const result = await senatorsTool.execute({
+      legislature: 19,
+      gender: "female",
+      limit: 500,
+      offset: 0,
+    });
+    expect(result.rows.length).toBeGreaterThan(0);
+    for (const r of result.rows) {
+      expect(r.gender).toBe("F");
+    }
+  }, 30000);
+
+  it("senators: born-from bounds the birth date", async () => {
+    const result = await senatorsTool.execute({
+      legislature: 19,
+      bornFrom: "1980-01-01",
+      limit: 500,
+      offset: 0,
+    });
+    expect(result.rows.length).toBeGreaterThan(0);
+    for (const r of result.rows) {
+      expect(r.birth_date >= "1980-01-01").toBe(true);
+    }
   }, 30000);
 
   it("senator: returns structured detail", async () => {

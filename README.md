@@ -75,8 +75,8 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 
 | Comando | Cosa fa |
 |---------|---------|
-| `deputies list` | Lista deputati Camera, filtrabile per legislatura |
-| `senators list` | Lista senatori, filtrabile per legislatura |
+| `deputies list` | Lista deputati Camera, filtrabile per legislatura, circoscrizione, genere, data e luogo di nascita (comune/provincia/regione) |
+| `senators list` | Lista senatori, filtrabile per legislatura, genere, data e città di nascita |
 | `search find` | Cerca un parlamentare per nome in Camera, Senato o entrambi |
 | `deputy show` | Scheda di un deputato: nome, genere, data/luogo nascita, lista elezione, data elezione, convalida, commissioni |
 | `senator show` | Scheda di un senatore: nome, genere, data/luogo nascita, regione elezione, tipo elezione, data mandato |

@@ -115,6 +115,22 @@ const deputiesList = defineCommand({
       type: "string",
       description: "Filter by constituency/region (case-insensitive, e.g. sicilia)",
     },
+    gender: {
+      type: "string",
+      description: "Filter by gender: male | female",
+    },
+    "born-from": {
+      type: "string",
+      description: "Born on or after (YYYY-MM-DD)",
+    },
+    "born-to": {
+      type: "string",
+      description: "Born on or before (YYYY-MM-DD)",
+    },
+    "birth-place": {
+      type: "string",
+      description: "Filter by birthplace (comune/provincia/regione/stato, case-insensitive, e.g. sicilia)",
+    },
     limit: {
       type: "string",
       description: "Max rows to return (default 100, max 1000)",
@@ -135,6 +151,10 @@ const deputiesList = defineCommand({
     const result = await runTool(deputiesTool, {
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       region: (args.region as string) || undefined,
+      gender: (args.gender as "male" | "female" | undefined) || undefined,
+      bornFrom: (args["born-from"] as string) || undefined,
+      bornTo: (args["born-to"] as string) || undefined,
+      birthPlace: (args["birth-place"] as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 100,
       offset: Number(args.offset ?? 0),
     });
@@ -160,6 +180,22 @@ const senatorsList = defineCommand({
       description:
         "Only senators currently in office (default: true if no --legislature)",
     },
+    gender: {
+      type: "string",
+      description: "Filter by gender: male | female",
+    },
+    "born-from": {
+      type: "string",
+      description: "Born on or after (YYYY-MM-DD)",
+    },
+    "born-to": {
+      type: "string",
+      description: "Born on or before (YYYY-MM-DD)",
+    },
+    "birth-place": {
+      type: "string",
+      description: "Filter by birth city (case-insensitive; Senato exposes city only, no province/region)",
+    },
     limit: {
       type: "string",
       description: "Max rows to return (default 300, max 1000)",
@@ -182,6 +218,10 @@ const senatorsList = defineCommand({
       legislature: parseIntFlag(args.legislature as string, "legislature"),
       activeOnly:
         activeOnlyRaw === undefined ? undefined : Boolean(activeOnlyRaw),
+      gender: (args.gender as "male" | "female" | undefined) || undefined,
+      bornFrom: (args["born-from"] as string) || undefined,
+      bornTo: (args["born-to"] as string) || undefined,
+      birthPlace: (args["birth-place"] as string) || undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 300,
       offset: Number(args.offset ?? 0),
     });
@@ -643,7 +683,7 @@ const voteDetailShow = defineCommand({
   args: {
     "vote-uri": { type: "string", description: "Full URI of the votazione", required: true },
     "group-acronym": { type: "string", description: "Filter by group acronym (es. FDI, PD-IDP, M5S)" },
-    "vote-type": { type: "string", description: "Filter by vote type: Favorevole|Contrario|Astenuto|Non ha votato" },
+    "vote-type": { type: "string", description: "Filter by vote type: Favorevole|Contrario|Astensione|Non ha votato" },
     limit: { type: "string", default: "700" },
     format: { type: "string", default: "csv" },
   },
@@ -651,7 +691,7 @@ const voteDetailShow = defineCommand({
     const result = await runTool(voteDetailTool, {
       voteUri: args["vote-uri"] as string,
       groupAcronym: args["group-acronym"] as string | undefined,
-      voteType: args["vote-type"] as "Favorevole" | "Contrario" | "Astenuto" | "Non ha votato" | undefined,
+      voteType: args["vote-type"] as "Favorevole" | "Contrario" | "Astensione" | "Non ha votato" | undefined,
       limit: parseIntFlag(args.limit as string, "limit") ?? 700,
     });
     emit(result, parseFormat(args.format as string));

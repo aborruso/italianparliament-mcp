@@ -16,9 +16,31 @@ const inputSchema = z.object({
     .boolean()
     .optional()
     .describe("Solo senatori in carica (default: true se nessuna legislatura)"),
+  gender: z
+    .enum(["male", "female"])
+    .optional()
+    .describe("Filtra per genere: 'male' o 'female'"),
+  bornFrom: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .describe("Nati dal (YYYY-MM-DD, incluso)"),
+  bornTo: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .describe("Nati fino al (YYYY-MM-DD, incluso)"),
+  birthPlace: z
+    .string()
+    .optional()
+    .describe(
+      "Filtra per città di nascita (match case-insensitive, es. 'rovigo'). Nota: il Senato espone solo la città, non provincia/regione.",
+    ),
   limit: z.number().int().positive().max(1000).default(300),
   offset: z.number().int().nonnegative().default(0),
 });
+
+const sparqlEsc = (s: string): string => s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
 const columns = [
   "uri",
@@ -63,6 +85,8 @@ export const senatorsTool: Tool<typeof inputSchema> = {
   examples: [
     "italianparliament senators list --legislature 19",
     "italianparliament senators list --active-only",
+    "italianparliament senators list --legislature 19 --gender female",
+    "italianparliament senators list --legislature 19 --born-from 1980-01-01 --format jsonl",
     "italianparliament senators list --limit 500 --format jsonl",
   ],
   async execute(input) {
@@ -73,6 +97,18 @@ export const senatorsTool: Tool<typeof inputSchema> = {
         ? `FILTER(?leg=${input.legislature})`
         : "";
     const activeFilter = activeOnly ? "FILTER(!bound(?me))" : "";
+
+    // Genere Senato: valori F/M (Camera usa female/male). dataNascita è YYYY-MM-DD,
+    // confronto lessicografico via STR(). cittaNascita è solo la città (no
+    // provincia/regione al Senato).
+    const demoFilters = [
+      input.gender ? `FILTER(STR(?gen) = "${input.gender === "female" ? "F" : "M"}")` : "",
+      input.bornFrom ? `FILTER(STR(?dob) >= "${input.bornFrom}")` : "",
+      input.bornTo ? `FILTER(STR(?dob) <= "${input.bornTo}")` : "",
+      input.birthPlace ? `FILTER(CONTAINS(LCASE(STR(?bc)), LCASE("${sparqlEsc(input.birthPlace)}")))` : "",
+    ]
+      .filter(Boolean)
+      .join("\n  ");
 
     const query = `${OSR_PREFIXES}
 SELECT DISTINCT ?s ?fn ?ln ?leg ?ms ?me ?mt ?tfm ?te ?re ?gen ?dob ?bc ?pic
@@ -94,6 +130,7 @@ WHERE {
   OPTIONAL { ?s <http://xmlns.com/foaf/0.1/depiction> ?pic }
   ${legFilter}
   ${activeFilter}
+  ${demoFilters}
 }
 ORDER BY ?ln ?fn
 LIMIT ${input.limit} OFFSET ${input.offset}`;

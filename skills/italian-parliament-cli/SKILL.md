@@ -4,7 +4,7 @@ description: Query Italian Parliament open data from the command line (italianpa
 compatibility: Requires the @aborruso/italianparliament-mcp npm package installed globally (provides the `italianparliament` command)
 metadata:
   author: aborruso
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Italian Parliament CLI Skill
@@ -66,9 +66,12 @@ italianparliament rank list --rank-by aic-primo-firmatario --legislature 19 --li
 
 **Who voted against in a vote**
 ```bash
-italianparliament vote-detail show --vote-uri <vote-uri> --format csv | \
-  python3 -c "import sys,csv; [print(r) for r in csv.DictReader(sys.stdin) if r['vote']=='Contrario']"
+italianparliament vote-detail show --vote-uri <vote-uri> --format jsonl | \
+  jq 'select(.vote=="Contrario")'
 ```
+
+**Dissidenti, e altri obiettivi giornalistici derivabili senza tool dedicato**
+Vedi [obiettivi giornalistici](references/obiettivi-giornalistici.md): ricette pronte (es. i "ribelli" che votano contro la linea di gruppo) combinando i tool esistenti.
 
 **A person's full career (legislatures + government)**
 ```bash

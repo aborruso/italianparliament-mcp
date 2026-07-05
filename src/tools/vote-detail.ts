@@ -15,7 +15,7 @@ const inputSchema = z.object({
     .optional()
     .describe("Filtra per sigla gruppo (es. 'FDI', 'PD-IDP', 'M5S'). Case-sensitive."),
   voteType: z
-    .enum(["Favorevole", "Contrario", "Astenuto", "Non ha votato"])
+    .enum(["Favorevole", "Contrario", "Astensione", "Non ha votato"])
     .optional()
     .describe("Filtra per tipo di voto"),
   limit: z.number().int().min(1).max(1000).default(700),
@@ -32,7 +32,7 @@ const columns = ["deputy_uri", "deputy_name", "vote", "group_uri", "group_acrony
 export const voteDetailTool: Tool<typeof inputSchema> = {
   name: "vote-detail",
   description:
-    "[CAMERA] Voto individuale di ogni deputato in una singola votazione: come ha votato (Favorevole, Contrario, Astenuto, Non ha votato) con gruppo parlamentare. Richiede l'URI della votazione (ottenibile da votes list).",
+    "[CAMERA] Voto individuale di ogni deputato in una singola votazione: come ha votato (Favorevole, Contrario, Astensione, Non ha votato) con gruppo parlamentare. Richiede l'URI della votazione (ottenibile da votes list).",
   inputSchema,
   examples: [
     "italianparliament vote-detail show --vote-uri http://dati.camera.it/ocd/votazione.rdf/vs19_047_005",
