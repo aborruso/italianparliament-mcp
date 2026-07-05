@@ -1,10 +1,10 @@
 ---
 name: italian-parliament-cli
-description: Query Italian Parliament open data from the command line using the italianparliament CLI. Use when a user wants to run shell commands, build pipelines, export CSV/JSONL, or script parliamentary data analysis. Covers all subcommands for deputies, senators, bills, votes, speeches, groups, and more.
+description: Query Italian Parliament open data from the command line (italianparliament CLI). Use when the user wants to run shell pipelines, export CSV/JSONL, or script analysis over deputies, senators, bills, votes, speeches, and groups.
 compatibility: Requires the @aborruso/italianparliament-mcp npm package installed globally (provides the `italianparliament` command)
 metadata:
   author: aborruso
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Italian Parliament CLI Skill
@@ -32,7 +32,7 @@ italianparliament <command> --help       # options + examples
 italianparliament <resource> <action> [--option value ...]
 ```
 
-Default output: **CSV**. Add `--format jsonl` for JSONL. List commands (`bills`, `aic`, `votes`, `senato-votes`) accept `--count-only`.
+Default output: **CSV** (for spreadsheets, `duckdb`, `mlr`). Add `--format jsonl` for `jq`/streaming.
 
 ## Default legislature
 
@@ -84,13 +84,6 @@ italianparliament gov-members list --name draghi
 ```bash
 italianparliament group-rank list --rank-by aic --legislature 19   # colonna count_per_member già calcolata
 ```
-
-## Output formats
-
-| Format | Flag | Use |
-|---|---|---|
-| JSONL (default) | — | `jq`, streaming |
-| CSV | `--format csv` | spreadsheets, `duckdb`, `mlr` |
 
 ## Ricerca testuale (`--keyword`)
 

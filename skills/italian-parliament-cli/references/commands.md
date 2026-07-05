@@ -13,18 +13,10 @@ Common options available on most commands:
 
 ---
 
-## Scoperta (orchestrazione)
+## Note utili
 
-Comandi per orientarsi senza conoscere a memoria la superficie della CLI:
+Comandi di scoperta (`guide`, `which`, `--help`) documentati nel SKILL.
 
-```bash
-italianparliament guide                  # stampa il flusso tipico (scoperta → URI → dettaglio)
-italianparliament which "testo ddl"      # trova il comando per una capacità (exit 0 = match, 2 = nessun match)
-italianparliament which votazione --json # output ranked [{command, score, description}]
-italianparliament <comando> --help       # opzioni ed esempi del comando
-```
-
-Note utili:
 - `bills`/`aic`/`votes`/`senato-votes` accettano `--count-only` (solo il totale).
 - Su un valore enum errato (`--vote-type`, `--rank-by`, ...) l'errore elenca i valori validi.
 - **`html_url`**: i tool su persone e atti/DDL espongono una colonna `html_url` con il link alla scheda istituzionale su `camera.it`/`senato.it`, accanto all'URI SPARQL.
@@ -324,7 +316,6 @@ Classifica i gruppi Camera per AIC/DDL con media per membro.
 italianparliament group-rank list --rank-by aic --legislature 19
 italianparliament group-rank list --rank-by bills --legislature 19 --limit 10
 ```
-Nota: `bills`/`aic`/`votes`/`senato-votes` accettano `--count-only` (solo il totale).
 
 ### `rank list`
 Ranking parlamentari per attività.
