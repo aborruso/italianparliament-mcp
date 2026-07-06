@@ -1,5 +1,9 @@
 # LOD wiki — log
 
+## 2026-07-06
+
+* **Update**: [sedute commissione Senato](/senato/sedute-commissione.md) — aggiunta sezione "il dato manca dal LOD ma esiste fuori: liste JSON `listasommcomm`". Il Webmaster del Senato (email 2026-07-06) conferma che lo SPARQL su `osr:SedutaCommissione` **non** espone resoconto/OdG e indica le liste JSON statiche `senato.it/static/bgt/listasommcomm/<TIPO_COD_COMM>/<COD_COMM>/t/<LEG>/<ANNO>/index.json` come fonte con link ai resoconti. Schema verificato via agent-browser (WAF → `curl` HTTP 202 vuoto): per seduta espone `id_testo`, `num_sed_comm`, `ora_inizio/fine`, `descr_tipo_veste` (Plenaria/UdP/Comitato ristretto/Sottocommissione pareri), `diz_raggr` (sedute congiunte). Link al sommario dei lavori da `id_testo`: `show-doc?leg=<LEG>&tipodoc=SommComm&id=<id_testo>&idoggetto=0` (equivalente Senato del bollettino Camera). Restano assenti ovunque: presenti a ciascuna seduta e persone/enti auditi (chiesti nella stessa email, in attesa di riscontro sul limite di rate).
+
 ## 2026-07-05
 
 * **Creation**: [Date degli atti di sindacato ispettivo (aic)](/camera/aic-date.md) (Gotcha, Camera) — verificato su `aic3_02760_19` (question time 1 luglio) che `dc:date` è la **presentazione** (a volte composta `AAAAMMGG-AAAAMMGG` = presentazione-modifica, ~62% degli aic leg.19), mentre la data di **conclusione/trattazione** è `ocd:endDate` (`20260701`, con `ocd:concluso=1`), campo strutturato e filtrabile che il tool `aic` non usa. Caveat: `endDate` non è "data di seduta" — raggruppa tipi eterogenei chiusi nella stessa finestra (194 atti il 20260701; le 58 "immediata" tracciano a 2 sedute, n.683+684). La **seduta non è un link strutturato**: il numero è solo nel testo di `dc:description`, quindi il filtro per singola seduta non è fattibile in modo pulito (limite reale del LOD). Emerso dalla gap analysis news-driven del 2026-07-05.
