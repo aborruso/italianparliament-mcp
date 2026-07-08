@@ -142,6 +142,8 @@ Votazioni d'Assemblea del Senato: esito, contatori, tipo, data seduta, DDL colle
 - `legislature`: numero legislatura (default 19)
 - `ddlUri`: filtra le votazioni collegate a un DDL
 - `dateFrom`/`dateTo`: intervallo data seduta (YYYY-MM-DD)
+- `keyword`: cerca nel label del voto **e** (da v0.20.0) nel titolo del DDL collegato (`osr:oggetto`/`osr:relativoA`/`osr:titolo`), in OR — un tema che sta solo nel titolo del provvedimento (es. `bilancio`) viene trovato anche quando il label del voto è generico (`Votazione finale`). Limite: se il voto non ha DDL collegato (alcune fiducie/mozioni) il tema resta irraggiungibile per keyword.
+- `confidenceVote` (true/false): voti di fiducia (label-based, esclude le mozioni di sfiducia); `finalVote` (true/false): `Votazione finale`. Il tipo semantico vive nel `rdfs:label`, non in `osr:tipoVotazione`.
 - Colonna `bill_number`: numero DDL citato nel label (es. `562-B`). `ddl_uri`: URI del DDL, popolato anche per le fiducie (prive di `osr:oggetto`) risolvendo il numero via `osr:fase`.
 
 ### `senato-vote-detail`
