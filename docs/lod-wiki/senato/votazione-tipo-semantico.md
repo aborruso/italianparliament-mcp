@@ -49,22 +49,22 @@ FILTER(CONTAINS(LCASE(STR(?label)), "votazione finale"))
 
 Caveat Virtuoso: `STR()` obbligatorio sul literal tipizzato (cfr. [[trappole]]); `LCASE` per case-insensitive.
 
-# Limite: il tema del decreto spesso NON è nel label
+# Il tema del decreto spesso NON è nel label (mitigato da v0.20.0)
 
-Molte votazioni hanno label **generico** senza tema: `Votazione finale`, `Em. 14.6, Camusso e altri`, `Votazione questione pregiudiziale`. Il tema del provvedimento (es. "caccia", "piano casa", "bilancio") **non** è nel label della votazione — vive nel `rdfs:label`/titolo del DDL collegato. Conseguenza: una ricerca `--keyword caccia` su `senato-votes` torna **vuota** anche se il voto Caccia esiste (label `Votazione finale`, ddl collegati `ddl/59566` ecc.). Per ricostruire il tema:
+Molte votazioni hanno label **generico** senza tema: `Votazione finale`, `Em. 14.6, Camusso e altri`, `Votazione questione pregiudiziale`. Il tema del provvedimento (es. "caccia", "piano casa", "bilancio") **non** è nel label della votazione — vive nel titolo del DDL collegato (`osr:oggetto`/`osr:relativoA`/`osr:titolo`). Prima della v0.20.0 una ricerca `--keyword caccia` su `senato-votes` tornava **vuota** anche se il voto esisteva (label `Votazione finale`).
+
+Dalla **v0.20.0** `--keyword` matcha anche il titolo del DDL collegato, in OR col label: `--keyword bilancio` restituisce le votazioni della legge di bilancio (es. `ddl/59654`) che con il solo label-match erano invisibili. `BOUND()` sul titolo evita che le fiducie (prive di `osr:oggetto`) facciano fallire l'intero OR. Limite residuo: se il voto non ha `osr:oggetto` collegato (alcune fiducie, mozioni) il tema non è raggiungibile per keyword — restano validi i passi sotto.
 
 1. Trova il voto per data (`--date-from/--date-to`) o per DDL (`--ddl-uri`).
 2. Leggi il `ddl_uri` (o risolvilo dal `bill_number` nel label, cfr. [[votazione-ddl-link]]).
 3. Cerca il tema sul DDL (`bill-progress --keyword` o `bill-signatories`).
-
-Il caso "bilancio" funziona con `--keyword` solo perché alcuni voti interni del Senato hanno label `Progetto di bilancio interno del Senato per l'anno finanziario ...` — non è il voto sul DDL Bilancio dello Stato (che è Camera).
 
 # Implementato
 
 Dalla v0.18.0 il tool `senato-votes` espone i filtri label-based:
 - `--confidence-vote true|false` → `CONTAINS "fiducia" && !CONTAINS "sfiducia"`
 - `--final-vote true|false` → `CONTAINS "votazione finale"`
-- `--keyword <term>` → `CONTAINS` sul label
+- `--keyword <term>` → `CONTAINS` sul label del voto **e** (da v0.20.0) sul titolo del DDL collegato (`osr:oggetto`/`osr:relativoA`/`osr:titolo`), in OR
 
 Simmetria con la Camera, dove `votes` ha `--confidence-vote` (campo strutturato `ocd:richiestaFiducia`) e `--keyword` (su label/title/description). Al Senato manca il campo strutturato per la fiducia, quindi il filtro è testuale sul label.
 

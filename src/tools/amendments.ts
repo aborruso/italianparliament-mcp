@@ -40,6 +40,8 @@ export const amendmentsTool: Tool<typeof inputSchema> = {
   name: "amendments",
   description:
     "[SENATO] Emendamenti presentati al Senato con numero, tipo, DDL collegato e link al testo ufficiale. Filtrabile per legislatura e per DDL (utile per contare/leggere gli emendamenti a un provvedimento).",
+  emptyHint:
+    "Nessun emendamento trovato. Il dataset osr:Emendamento del Senato non risulta aggiornato oltre il 9 agosto 2024: nessun DDL con dataPresentazione successiva a quella data ha emendamenti collegati nel LOD, a prescindere dal DDL passato. Un vuoto su un provvedimento recente NON significa 'nessun emendamento presentato' — significa che la fonte non pubblica ancora questo dato per quel periodo. Non dedurre l'assenza di emendamenti da questo risultato.",
   inputSchema,
   examples: [
     "italianparliament amendments list --legislature 19 --limit 20",

@@ -1,0 +1,37 @@
+---
+type: Reference
+title: Corrispondenza con il Webmaster del Senato (Webmaster@senato.it)
+description: Log cronologico delle segnalazioni inviate al Webmaster del Senato sui dati aperti (dati.senato.it) e delle relative risposte, con stato (risposta ricevuta / in attesa) e link alle pagine wiki dove il contenuto tecnico estratto è documentato.
+resource: mailto:Webmaster@senato.it
+tags: [senato, corrispondenza, webmaster, segnalazioni, advocacy]
+timestamp: 2026-07-08
+---
+
+Archivio delle segnalazioni inviate a `Webmaster@senato.it` sui dati aperti del Senato e delle risposte ricevute. Le bozze di lavoro (non versionate) restano in `docs/note-gestori-lod/senato-webmaster.md`; qui si archivia lo scambio effettivamente avvenuto, una volta inviato/risposto, perché il contenuto (soprattutto le risposte) è spesso informazione utile e non altrimenti reperibile.
+
+Il dettaglio tecnico estratto da ogni scambio è documentato nella pagina wiki pertinente (linkata inline), non ripetuto qui.
+
+# Thread 1 — Sedute di commissione: manca resoconto/OdG nello SPARQL
+
+**Stato: risposto, richiesta whitelist in attesa di riscontro.**
+
+| Data | Da → A | Oggetto |
+|------|--------|---------|
+| 2026-07-02 09:23 | Borruso → Webmaster | Chiede se `osr:SedutaCommissione` espone altro oltre a data/tipo/commissione/legislatura (nessun titolo, OdG o link al resoconto trovato). Se confermato, richiede di esporre argomento/OdG (o almeno un link al resoconto, come il bollettino Camera), i senatori presenti e, per le audizioni, gli auditi. |
+| 2026-07-06 09:42 | Borruso → Webmaster | Sollecito (nessun contenuto nuovo). |
+| 2026-07-06 10:38 | Webmaster → Borruso | Conferma: lo SPARQL non espone resoconto/OdG. Indica una fonte alternativa **non documentata sul sito**: le liste JSON dei sommari di commissione (`listasommcomm`), con pattern URL e note d'uso. Raccomanda di non fare richieste troppo ravvicinate (rischio di blocco automatico). **Contenuto tecnico integrale → [Sedute e attività delle commissioni](sedute-commissione.md#il-dato-manca-dal-lod-ma-esiste-fuori-le-liste-json-dei-sommari-listasommcomm).** |
+| 2026-07-06 10:50 | Borruso → Webmaster | Chiede se `listasommcomm` è documentato altrove (per scoprire eventuali altri usi) e se esiste un limite di rate noto/documentabile (richieste/minuto, tetto giornaliero, User-Agent consigliato, canale whitelist) per configurare lo strumento in modo conservativo. |
+| 2026-07-06 11:26 | Webmaster → Borruso | `listasommcomm` non è documentato (introdotto di recente). Per ragioni di sicurezza non comunicano soglie/limiti né User-Agent. In caso di superamento limiti, si può richiedere l'inserimento in whitelist, motivando la richiesta. |
+| 2026-07-06 12:25 | Borruso → Webmaster | Osservazione costruttiva: senza nessuna soglia minima indicata (anche solo "N secondi tra una richiesta e l'altra") è impossibile usare la risorsa senza rischiare blocchi in buona fede. Formalizza la richiesta di whitelist: si presenta come presidente di onData APS, spiega lo strumento (MCP/CLI open source per dati aperti del Parlamento, uso di ricerca/data journalism non commerciale) e chiede le modalità concrete (User-Agent dedicato? token?). |
+
+*Prossimo passo: in attesa di risposta del Webmaster sulla whitelist.*
+
+# Thread 2 — Emendamenti (`osr:Emendamento`) fermi da agosto 2024
+
+**Stato: inviata oggi, in attesa di riscontro.**
+
+| Data | Da → A | Oggetto |
+|------|--------|---------|
+| 2026-07-08 08:00 | Borruso → Webmaster | Segnala che gli emendamenti collegati a DDL recenti risultano sempre assenti (DL Sicurezza 2025, Piano Casa 2026: 0 emendamenti) mentre sono regolarmente presenti su provvedimenti anche vecchi (Cura Italia 2020: 3.827; DL dic. 2022: 119). Query di verifica allegata: nessun DDL collegato a un emendamento ha `osr:dataPresentazione` successiva al 9/8/2024. Chiede se è un aggiornamento sospeso temporaneamente o se gli emendamenti recenti sono pubblicati altrove. **Contenuto tecnico integrale → [Emendamenti — dataset fermo da agosto 2024](emendamenti-freschezza.md).** Issue collegata: [#38](https://github.com/aborruso/italianparliament-mcp/issues/38). |
+
+*Prossimo passo: in attesa di risposta del Webmaster.*

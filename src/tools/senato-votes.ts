@@ -73,7 +73,7 @@ export const senatoVotesTool: Tool<typeof inputSchema> = {
   description:
     "[SENATO] Lista votazioni dell'Assemblea del Senato con esito, contatori (favorevoli, contrari, astenuti, presenti, votanti), tipo, data seduta e DDL collegato. Filtrabile per legislatura, data, DDL, parola chiave (label), voti di fiducia (--confidence-vote) e voti finali (--final-vote). Per il voto del singolo senatore usare senato-vote-detail. Le votazioni di FIDUCIA hanno ddl_uri vuoto alla fonte (il DDL è solo nel label, es. 'Disegno di legge n.1933. Votazione questione di fiducia'), ma --ddl-uri le include comunque: risolve le sedute del DDL e ricollega la fiducia votata quel giorno. Verifica sempre il ddl_uri di una 'Votazione finale' trovata per data: può appartenere a un atto diverso (testo unificato). Riporta solo i contatori restituiti, non stimarli.",
   emptyHint:
-    "Nessuna votazione trovata. Con --ddl-uri significa che nel LOD non risulta alcuna votazione d'Assemblea collegata a quel DDL (fiducie incluse): verifica l'URI del DDL, oppure il voto potrebbe essere solo in Commissione. Con --keyword/--confidence-vote/--final-vote: il tema/tipo non compare in tutti i label — riprova filtrando per data (--date-from/--date-to intorno all'evento) e riconosci il voto dal label. Caso limite: se cerchi una fiducia e il DDL non ha nessun altro voto d'Assemblea che lo cita, prova per data e riconosci il DDL dal label. Non inventare l'esito o i contatori del voto.",
+    "Nessuna votazione trovata. Con --ddl-uri significa che nel LOD non risulta alcuna votazione d'Assemblea collegata a quel DDL (fiducie incluse): verifica l'URI del DDL, oppure il voto potrebbe essere solo in Commissione. Con --keyword/--confidence-vote/--final-vote: il tema/tipo non compare in tutti i label — riprova filtrando per data (--date-from/--date-to intorno all'evento) e riconosci il voto dal label. Caso limite: se cerchi una fiducia e il DDL non ha nessun altro voto d'Assemblea che lo cita, prova per data e riconosci il DDL dal label. Gap noto di dataset (legislatura 18): tra il 10 marzo e il 16 aprile 2020 (periodo COVID) non risulta ALCUNA votazione d'Assemblea nel LOD, pur essendoci le sedute con i relativi interventi — include la fiducia sul decreto Cura Italia (9/4/2020). Un vuoto in questa finestra non significa che non si sia votato: è un buco della fonte, non deducibile da qui. Non inventare l'esito o i contatori del voto.",
   inputSchema,
   examples: [
     "italianparliament senato-votes list --legislature 19 --limit 50",
@@ -92,8 +92,17 @@ export const senatoVotesTool: Tool<typeof inputSchema> = {
       ? input.keyword.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
       : "";
     const labelFilters: string[] = [];
+    // Il tema del provvedimento spesso non è nel label del voto ("Votazione
+    // finale") ma nel titolo del DDL collegato (osr:titolo, via
+    // osr:oggetto/osr:relativoA): la keyword deve poter matchare anche lì,
+    // altrimenti ricerche come "caccia" non trovano il voto finale collegato
+    // a un DDL sulla caccia. BOUND() evita che il match sul titolo (assente
+    // sulle fiducie, prive di osr:oggetto) faccia fallire l'intero OR.
     if (input.keyword)
-      labelFilters.push(`CONTAINS(LCASE(STR(?label)), LCASE("${keywordEsc}"))`);
+      labelFilters.push(
+        `(CONTAINS(LCASE(STR(?label)), LCASE("${keywordEsc}")) || ` +
+          `(BOUND(?ddlTitolo) && CONTAINS(LCASE(STR(?ddlTitolo)), LCASE("${keywordEsc}"))))`,
+      );
     if (input.confidenceVote !== undefined)
       // 'fiducia' copre 'questione di fiducia' / 'questione fiducia' / 'fiducia governo';
       // esclude 'sfiducia' (mozioni di sfiducia individuale).
@@ -110,6 +119,12 @@ export const senatoVotesTool: Tool<typeof inputSchema> = {
       );
     const needsLabel = labelFilters.length > 0;
     const labelFilter = needsLabel ? `FILTER(${labelFilters.join(" && ")})` : "";
+    // Titolo del DDL collegato, serve solo per il match --keyword sul tema
+    // (vedi sopra); va nel BGP prima del labelFilter perché ?ddlTitolo vi è
+    // referenziato.
+    const ddlTopicPattern = input.keyword
+      ? "OPTIONAL { ?v osr:oggetto ?kwOggetto . OPTIONAL { ?kwOggetto osr:relativoA ?kwDdl . OPTIONAL { ?kwDdl osr:titolo ?ddlTitolo } } }"
+      : "";
 
     const dateFromFilter = input.dateFrom
       ? `FILTER(?date >= "${input.dateFrom}"^^xsd:date)`
@@ -156,6 +171,7 @@ SELECT DISTINCT ?date WHERE {
     // conteggio è la cardinalità del result-set filtrato (calcolata sotto).
     if (input.countOnly && !input.ddlUri) {
       const countWhere = [`?v a osr:Votazione ; osr:legislatura ${input.legislature} .`];
+      if (ddlTopicPattern) countWhere.push(ddlTopicPattern);
       if (needsLabel) countWhere.push(`?v rdfs:label ?label . ${labelFilter}`);
       if (input.dateFrom || input.dateTo)
         countWhere.push(`?v osr:seduta ?sed . ?sed osr:dataSeduta ?date . ${dateFromFilter} ${dateToFilter}`);
@@ -175,6 +191,7 @@ SELECT DISTINCT ?date WHERE {
 WHERE {
   ?v a osr:Votazione ; osr:legislatura ${input.legislature} ; osr:seduta ?s .
   OPTIONAL { ?s osr:dataSeduta ?date }
+  ${ddlTopicPattern}
   ${needsLabel ? `?v rdfs:label ?label . ${labelFilter}` : "OPTIONAL { ?v rdfs:label ?label }"}
   OPTIONAL { ?v osr:numero ?numero }
   OPTIONAL { ?v osr:tipoVotazione ?tipo }

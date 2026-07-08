@@ -18,6 +18,27 @@ export class SparqlError extends Error {
   }
 }
 
+// Il Senato non documenta soglie di rate limit (chiesto via email al
+// Webmaster il 2026-07-06, risposta: "per ragioni di sicurezza non possiamo
+// fornire dettagli"). Un burst di ~9 query dirette in pochi minuti ha
+// bloccato l'endpoint con un 403 il 2026-07-08. Throttle prudenziale:
+// almeno 2s tra l'inizio di due richieste Senato consecutive, in coda
+// sequenziale così protegge anche chiamate concorrenti. Solo Senato: la
+// Camera non ha mai mostrato lo stesso comportamento.
+const SENATO_MIN_INTERVAL_MS = 2000;
+let senatoThrottleChain: Promise<void> = Promise.resolve();
+let senatoLastCallAt = 0;
+
+function throttleSenato(): Promise<void> {
+  const next = senatoThrottleChain.then(async () => {
+    const wait = senatoLastCallAt + SENATO_MIN_INTERVAL_MS - Date.now();
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    senatoLastCallAt = Date.now();
+  });
+  senatoThrottleChain = next;
+  return next;
+}
+
 async function sparqlRequest(
   endpoint: string,
   query: string,
@@ -40,7 +61,7 @@ async function sparqlRequest(
           method: "GET",
           headers: {
             Accept: "application/json",
-            "User-Agent": "italianparliament-mcp/0.19.0",
+            "User-Agent": "italianparliament-mcp/0.20.0",
           },
           signal: controller.signal,
         });
@@ -88,10 +109,11 @@ export function cdQuery(
   );
 }
 
-export function snQuery(
+export async function snQuery(
   query: string,
   opts: { timeoutMs?: number; maxRetries?: number } = {},
 ): Promise<SparqlResults> {
+  await throttleSenato();
   return sparqlRequest(
     SENATO_ENDPOINT,
     query,
