@@ -4,6 +4,13 @@ import type { Row } from "../core/types.js";
 export type ToolResult = {
   rows: Row[];
   columns: string[];
+  /**
+   * Nota dinamica calcolata a runtime, mostrata SOLO quando il risultato è
+   * vuoto. A differenza di `emptyHint` (statico), dipende dall'input: serve a
+   * qualificare un vuoto ambiguo (es. finestra di date recente non ancora
+   * caricata nel LOD). Se presente, ha precedenza sull'emptyHint statico.
+   */
+  hint?: string;
 };
 
 export type Tool<S extends ZodTypeAny = ZodTypeAny> = {

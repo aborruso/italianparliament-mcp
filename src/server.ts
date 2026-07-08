@@ -56,7 +56,7 @@ const DEFAULT_EMPTY =
   "Nessun risultato dai dati. NON dedurre né inventare il valore: se serve, riformula (termine normativo o radice più corta per le ricerche testuali, filtro più largo) o verifica gli identificatori (URI/numero/ramo). Un vuoto è spesso un mismatch, non un dato assente.";
 
 function formatResult(result: ToolResult, emptyHint?: string): string {
-  if (result.rows.length === 0) return emptyHint ?? DEFAULT_EMPTY;
+  if (result.rows.length === 0) return result.hint ?? emptyHint ?? DEFAULT_EMPTY;
   return toJsonl(result.rows);
 }
 
@@ -88,7 +88,7 @@ function makeHandler(tool: Tool) {
 export function createServer(): McpServer {
   return new McpServer({
     name: "italianparliament-mcp",
-    version: "0.20.0",
+    version: "0.21.0",
   });
 }
 

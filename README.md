@@ -106,7 +106,7 @@ In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la docum
 | Comando | Cosa fa |
 |---------|---------|
 | `bill-progress list` | Iter dei DDL: al Senato stato/date/iniziativa/natura (lista, per `--ddl-uri`, o per numero con `--number <n>` + `--branch S\|C` — senza `--legislature` usa la legislatura corrente risolta dinamicamente); con `--uri <atto Camera>` restituisce la timeline completa dell'iter alla Camera (tutti gli stati attraversati, con data) |
-| `bill-signatories show` | Firmatari di un DDL (Camera o Senato): primo firmatario e cofirmatari. Per gli atti di iniziativa governativa il ruolo è "Governo (proponente)" |
+| `bill-signatories show` | Firmatari di un DDL (Camera o Senato): primo firmatario e cofirmatari. Per gli atti di iniziativa governativa (decreti-legge, DDL del Governo) i proponenti sono i ministri, con ruolo "Governo — &lt;dicastero&gt;" (Camera) o "Governo (proponente)" (Senato) |
 | `amendments list` | Emendamenti al Senato con numero, tipo, DDL collegato e link al testo. Filtrabile per legislatura e per DDL (`--ddl-uri`) |
 | `documents list` | Documenti parlamentari: atti del governo, atti UE, relazioni Corte dei Conti |
 | `sindacato-ispettivo list` | Atti di sindacato ispettivo Senato (interrogazioni, interpellanze, mozioni), filtrabile per data |

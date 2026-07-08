@@ -61,7 +61,7 @@ async function sparqlRequest(
           method: "GET",
           headers: {
             Accept: "application/json",
-            "User-Agent": "italianparliament-mcp/0.20.0",
+            "User-Agent": "italianparliament-mcp/0.21.0",
           },
           signal: controller.signal,
         });

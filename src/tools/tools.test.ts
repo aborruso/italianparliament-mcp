@@ -136,6 +136,32 @@ describe("Camera tools", () => {
     expect(Number(result.rows[0].count)).toBeGreaterThan(400);
   }, 30000);
 
+  it("votes: empty result on a recent window surfaces the Camera-staleness hint (and not on historical)", async () => {
+    // Data futura prossima: nessun voto esiste ancora (vuoto garantito) ma la
+    // finestra è "recente" → deve comparire l'hint di freschezza del LOD Camera,
+    // così il vuoto non è muto. Su una finestra storica l'hint NON deve comparire.
+    const soon = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    const recent = await votesTool.execute({
+      legislature: 19,
+      dateFrom: soon,
+      dateTo: soon,
+      limit: 5,
+      offset: 0,
+    });
+    expect(recent.rows.length).toBe(0);
+    expect(recent.hint).toMatch(/LOD Camera/);
+
+    const historical = await votesTool.execute({
+      legislature: 18,
+      dateFrom: "2019-01-01",
+      dateTo: "2019-01-01",
+      limit: 5,
+      offset: 0,
+    });
+    expect(historical.rows.length).toBe(0);
+    expect(historical.hint).toBeUndefined();
+  }, 30000);
+
   it("speeches: returns speeches for legislature 19", async () => {
     const result = await speechesTool.execute({ legislature: 19, limit: 3, offset: 0, chamber: "camera", countOnly: false });
     expect(result.rows.length).toBe(3);
@@ -395,6 +421,22 @@ describe("Senato tools", () => {
     const primary = result.rows.find((r) => r.is_primary === "true");
     expect(primary).toBeDefined();
     expect(primary?.name).toBeTruthy();
+  }, 30000);
+
+  it("bill-signatories: Camera government decree resolves ministers via ocd:rif_persona (no empty names)", async () => {
+    // Piano Casa (ac19_2920) è un decreto-legge: i proponenti sono ministri
+    // (blank node membro-governo). Prima del fix tornavano righe con name="".
+    const result = await billSignatoriesTool.execute({
+      billUri: "http://dati.camera.it/ocd/attocamera.rdf/ac19_2920",
+      limit: 50,
+    });
+    expect(result.rows.length).toBeGreaterThan(0);
+    // Nessun nome vuoto: ogni ministro è risolto via ocd:rif_persona.
+    expect(result.rows.every((r) => r.name.trim().length > 0)).toBe(true);
+    // Ruolo governativo esplicito e is_primary non "true" (proponenti multipli).
+    expect(result.rows.every((r) => r.role.startsWith("Governo"))).toBe(true);
+    expect(result.rows.some((r) => r.role.includes("Ministro"))).toBe(true);
+    expect(result.rows.every((r) => r.is_primary === "false")).toBe(true);
   }, 30000);
 
   it("amendments: returns amendments for legislature 19", async () => {

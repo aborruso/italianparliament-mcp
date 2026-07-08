@@ -29,7 +29,7 @@ const inputSchema = z.object({
     .regex(/^\d+$/)
     .optional()
     .describe(
-      "Numero dell'atto Senato (es. 1809 per S.1809). Da abbinare a --branch per il ramo. Se ometti --legislature, con --number la CLI usa di default la legislatura corrente (risolta dinamicamente dall'endpoint Camera) per evitare omonimi storici. Lo stesso numero può esistere in entrambi i rami (C.1809 e S.1809).",
+      "Numero dell'atto Senato (es. 1809 per S.1809). Da abbinare a --branch per il ramo. Include automaticamente le letture successive della navetta con suffisso (es. --number 1353 torna S.1353 E S.1353-B). Se ometti --legislature, con --number la CLI usa di default la legislatura corrente (risolta dinamicamente dall'endpoint Camera) per evitare omonimi storici. Lo stesso numero può esistere in entrambi i rami (C.1809 e S.1809).",
     ),
   branch: z
     .enum(["S", "C"])
@@ -118,8 +118,10 @@ export const billProgressTool: Tool<typeof inputSchema> = {
     if (input.number) {
       // numeroFase è tipizzato → confronto via STR(); il ramo (osr:ramo S/C) è
       // obbligatorio perché lo stesso numero esiste in entrambi (C.1809 e S.1809).
+      // Match sul numero base E sulle letture successive con suffisso (1353, 1353-B,
+      // 1353-C…) così la navetta a più letture torna completa da un solo --number.
       const branch = input.branch ?? "S";
-      filters.push(`FILTER(STR(?numeroFase) = "${input.number}")`);
+      filters.push(`FILTER(REGEX(STR(?numeroFase), "^${input.number}(-[A-Z])?$"))`);
       filters.push(`?s osr:ramo ?ramoFiltro . FILTER(STR(?ramoFiltro) = "${branch}")`);
     }
     const effectiveLegislature =

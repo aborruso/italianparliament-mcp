@@ -251,6 +251,13 @@ ORDER BY DESC(?date)`;
       seen.add(uri);
       return true;
     });
+    // Vuoto su finestra di date recente: il LOD Camera è pubblicato a lotti e
+    // può essere indietro di giorni. Segnaliamo che un "non trovato" recente non
+    // equivale a "non avvenuto", invece di restituire un elenco vuoto silenzioso.
+    if (deduped.length === 0) {
+      const hint = recentWindowHint(input.dateFrom, input.dateTo);
+      if (hint) return { rows: deduped, columns, hint };
+    }
     // bill_number dal testo della descrizione ("DDL 2920-A - VOTO FINALE" → "2920-A").
     for (const r of deduped) {
       r.bill_number = extractBillNumber(r.description);
@@ -304,6 +311,23 @@ SELECT ?a ?id WHERE {
     return { rows: deduped, columns };
   },
 };
+
+/**
+ * Se la finestra di date interrogata tocca gli ultimi ~14 giorni (o il futuro
+ * prossimo), restituisce una nota di freschezza; altrimenti undefined. Serve a
+ * qualificare un risultato vuoto sul dato Camera più recente, che il LOD
+ * pubblica a lotti con alcuni giorni di ritardo (vedi
+ * docs/lod-wiki/freschezza-e-autorevolezza.md).
+ */
+function recentWindowHint(dateFrom?: string, dateTo?: string): string | undefined {
+  const bound = dateTo ?? dateFrom;
+  if (!bound) return undefined;
+  const boundMs = new Date(`${bound}T00:00:00Z`).getTime();
+  if (Number.isNaN(boundMs)) return undefined;
+  const daysAgo = (Date.now() - boundMs) / 86_400_000;
+  if (daysAgo > 14) return undefined;
+  return "Nessuna votazione nell'intervallo. Attenzione: il LOD Camera è pubblicato a lotti e può essere indietro di alcuni giorni, quindi un voto molto recente potrebbe non essere ancora caricato — un 'non trovato' su una data recente NON equivale a 'non avvenuto'. Verifica sul resoconto d'Aula/scheda iter di camera.it e riprova più avanti. Non inventare numeri, date o esiti.";
+}
 
 /**
  * Estrai codice mozione/risoluzione AIC dal testo.

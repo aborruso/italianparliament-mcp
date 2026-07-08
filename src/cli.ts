@@ -57,6 +57,11 @@ function withExamples(description: string, examples: string[]): string {
 
 function emit(result: ToolResult, format: Format): void {
   process.stdout.write(formatRows(result.rows, format, result.columns) + "\n");
+  // Hint dinamico su risultato vuoto → stderr, per non sporcare l'output
+  // parsabile (CSV/JSONL) di pipeline e redirezioni.
+  if (result.rows.length === 0 && result.hint) {
+    process.stderr.write(result.hint + "\n");
+  }
 }
 
 // Valida l'input con lo schema Zod del tool PRIMA di eseguirlo: così gli enum
