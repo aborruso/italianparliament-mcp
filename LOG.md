@@ -1,5 +1,13 @@
 # LOG
 
+## 2026-07-09
+
+- **v0.22.0 — `senato-votes` multi-DDL + fix EPIPE CLI** (nessun tool nuovo, **43 tool**; 94/94 test verdi, tsc pulito). Campi strutturati per i voti su testi unificati (`ddl_count`, `ambiguous_ddl`, `ddl_uris_json`, `ddl_html_urls_json`, `rss_urls_json`) e pipe Unix interrotte (`| head`) che escono pulite. Dettaglio nelle voci sotto. Rimosso anche il dead code `joinMap` (rompeva `tsc --noEmit`). Wiki OKF covid-2020 esteso ad altri due decreti (Rilancio, Agosto).
+
+- **`senato-votes` — Fase 1 + 2 sul multi-valore: ambiguità esplicita + campi JSON strutturati**. Il problema non era nei dati ma nel nostro output: il tool collassava liste reali di DDL/URL in stringhe piatte separate da ` | `, poi le risplittava internamente. Fix minimale senza rompere retrocompatibilità: i campi esistenti (`ddl_uri`, `ddl_html_url`, `rss_url`) restano invariati, ma si aggiungono `ddl_count`, `ambiguous_ddl`, `ddl_uris_json`, `ddl_html_urls_json`, `rss_urls_json`. Così il CSV resta leggibile e il JSONL diventa realmente machine-friendly senza dover parseare pipe custom. Verificato sul caso multi-DDL del 2026-06-23 (`votazione/19-431-19`): `ddl_count=5`, `ambiguous_ddl=true`, array JSON con i 5 DDL e i rispettivi URL/RSS. Root cause classificata correttamente: **problema di modellazione output del tool**, non del LOD.
+
+- **fix CLI `EPIPE` — pipe Unix interrotte ora escono pulite**: usando pipeline brevi tipo `italianparliament ... | head -3`, Node continuava a scrivere su `stdout` dopo che `head` aveva chiuso il pipe → stack trace `Error: write EPIPE`, rumoroso ma non legato ai dati. Fix minimo in `src/cli.ts`: handler su `process.stdout` e `process.stderr` che intercetta `err.code === "EPIPE"` e termina con `exit(0)` invece di rilanciare. Verificato end-to-end dopo build con `node dist/cli.js vote-detail show --vote-uri http://dati.camera.it/ocd/votazione.rdf/vs18_382_001 --format jsonl | head -3` → 3 righe, **nessuno stack trace**, exit code 0. Problema puro di ergonomia CLI/tooling, non della fonte.
+
 ## 2026-07-08
 
 - **v0.21.0 — 3 fix/mitigazioni dai gap del report news-agent `docs/news-agent/2026-07-08_12-57.md`** (nessun tool nuovo, **43 tool**; 94/94 test verdi, tsc pulito): (1) `bill-progress --number` recupera l'intera navetta a più letture (-B/-C); (2) `bill-signatories` risolve i ministri sui decreti-legge Camera (basta righe con name vuoto); (3) hint di staleness su `votes` per non restituire un vuoto muto sul dato Camera più recente. Dettaglio nelle voci sotto.

@@ -63,8 +63,13 @@ const columns = [
   "majority",
   "bill_number",
   "ddl_uri",
+  "ddl_count",
+  "ambiguous_ddl",
+  "ddl_uris_json",
   "ddl_html_url",
+  "ddl_html_urls_json",
   "rss_url",
+  "rss_urls_json",
   "object_uri",
 ];
 
@@ -313,12 +318,12 @@ SELECT ?ddl ?f WHERE {
         }
       }
     }
-    const joinMap = (ddl: string, fn: (u: string) => string): string =>
-      ddl
+    const splitMulti = (value: string): string[] =>
+      value
         .split(" | ")
-        .map((u) => fn(u.trim()))
-        .filter(Boolean)
-        .join(" | ");
+        .map((u) => u.trim())
+        .filter(Boolean);
+
     let values = [...byUri.values()];
     if (input.ddlUri) {
       const target = input.ddlUri;
@@ -338,11 +343,21 @@ SELECT ?ddl ?f WHERE {
         return { rows: [{ count: String(values.length) }], columns: ["count"] };
       values = values.slice(input.offset, input.offset + input.limit);
     }
-    const rows = values.map((v) => ({
-      ...v,
-      ddl_html_url: joinMap(v.ddl_uri, actHtmlUrl),
-      rss_url: joinMap(v.ddl_uri, (u) => ddlRssUrl(u, input.legislature)),
-    }));
+    const rows = values.map((v) => {
+      const ddlUris = splitMulti(v.ddl_uri);
+      const ddlHtmlUrls = ddlUris.map((u) => actHtmlUrl(u)).filter(Boolean);
+      const rssUrls = ddlUris.map((u) => ddlRssUrl(u, input.legislature)).filter(Boolean);
+      return {
+        ...v,
+        ddl_count: String(ddlUris.length),
+        ambiguous_ddl: ddlUris.length > 1 ? "true" : "false",
+        ddl_uris_json: JSON.stringify(ddlUris),
+        ddl_html_url: ddlHtmlUrls.join(" | "),
+        ddl_html_urls_json: JSON.stringify(ddlHtmlUrls),
+        rss_url: rssUrls.join(" | "),
+        rss_urls_json: JSON.stringify(rssUrls),
+      };
+    });
     return { rows, columns };
   },
 };

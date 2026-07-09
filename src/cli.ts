@@ -51,6 +51,14 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
 
+function exitOnEpipe(err: NodeJS.ErrnoException): never {
+  if (err.code === "EPIPE") process.exit(0);
+  throw err;
+}
+
+process.stdout.on("error", exitOnEpipe);
+process.stderr.on("error", exitOnEpipe);
+
 function withExamples(description: string, examples: string[]): string {
   return `${description}\n\nExamples:\n${examples.map((e) => `  ${e}`).join("\n")}`;
 }
