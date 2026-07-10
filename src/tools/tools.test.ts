@@ -527,17 +527,18 @@ describe("Senato tools", () => {
     expect(result.rows[0].legislature).toBe("19");
   }, 30000);
 
-  it("amendments: le righe LOD espongono akn_xml_url (testo raw senza WAF)", async () => {
-    // ddl/60233 (Piano Casa): il LOD è tornato fresco (refresh tra il 7 e il
-    // 10 lug 2026), quindi le righe arrivano dal LOD; la conversione
-    // osr:URLTestoXml → URL raw del bulk AKN deve comunque esserci.
+  it("amendments: ogni riga espone akn_xml_url (testo raw senza WAF), da LOD o da fallback AKN", async () => {
+    // ddl/60233 (Piano Casa): la freschezza del LOD è intermittente (osservato
+    // riallinearsi tra il 7 e il 10 lug 2026, wiki senato/emendamenti-freschezza.md).
+    // Non si assume quale sorgente risponda in un dato momento: si accetta
+    // "lod" o "akn" e si verifica solo che akn_xml_url sia comunque coerente.
     const result = await amendmentsTool.execute({
       ddlUri: "http://dati.senato.it/ddl/60233",
       limit: 5,
       offset: 0,
     });
     expect(result.rows.length).toBe(5);
-    expect(result.rows[0].source).toBe("lod");
+    expect(["lod", "akn"]).toContain(result.rows[0].source);
     expect(result.rows[0].akn_xml_url).toContain(
       "raw.githubusercontent.com/SenatoDellaRepubblica/AkomaNtosoBulkData/master/Leg19/Atto00060233/",
     );
@@ -558,16 +559,21 @@ describe("Senato tools", () => {
   }, 30000);
 
   it("amendments: withProponents estrae il primo firmatario dal testo AKN", async () => {
+    // Il bulk AKN contiene anche file stub vuoti (200 OK, zero contenuto —
+    // wiki senato/emendamenti-firmatario.md, es. odg G1.17 su questo stesso
+    // DDL): non si assume che la riga in posizione 0 sia per forza popolata,
+    // solo che ALMENO una riga della finestra lo sia.
     const result = await amendmentsTool.execute({
       ddlUri: "http://dati.senato.it/ddl/60233",
       withProponents: true,
-      limit: 2,
+      limit: 5,
       offset: 0,
     });
-    expect(result.rows.length).toBe(2);
-    expect(result.rows[0].first_proponent).not.toBe("");
-    expect(result.rows[0].first_proponent_uri).toContain("dati.senato.it");
-    expect(result.rows[0].number).not.toBe("");
+    expect(result.rows.length).toBe(5);
+    const withProponent = result.rows.find((r) => r.first_proponent !== "");
+    expect(withProponent).toBeDefined();
+    expect(withProponent?.first_proponent_uri).toContain("dati.senato.it");
+    expect(withProponent?.number).not.toBe("");
   }, 30000);
 
   it("amendments: rejects a Camera ddlUri instead of returning empty (offline guard)", async () => {

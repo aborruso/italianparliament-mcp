@@ -160,4 +160,11 @@ describe("mapLimit", () => {
     expect(out).toEqual([10, 20, 30, 40, 50]);
     expect(peak).toBeLessThanOrEqual(2);
   });
+
+  it("con limit<=0 processa comunque gli item invece di tornare vuoto in silenzio", async () => {
+    const out = await mapLimit([1, 2, 3], 0, async (n) => n * 10);
+    expect(out).toEqual([10, 20, 30]);
+    const outNeg = await mapLimit([1, 2], -5, async (n) => n * 10);
+    expect(outNeg).toEqual([10, 20]);
+  });
 });

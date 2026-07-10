@@ -70,9 +70,13 @@ export async function listAknDir(path: string): Promise<AknDirListing> {
         `https://github.com/${AKN_REPO}/tree/master/${path}`,
     );
   }
+  // L'ordine di tree.items non è un contratto garantito dell'endpoint (non
+  // documentato): senza un sort esplicito, offset/limit sui chiamanti
+  // rischiano duplicati/salti tra esecuzioni diverse.
   const names = tree.items
     .map((i) => i.name ?? "")
-    .filter((n) => n.length > 0);
+    .filter((n) => n.length > 0)
+    .sort();
   return { names, totalCount: tree.totalCount ?? names.length };
 }
 
@@ -178,8 +182,10 @@ export async function mapLimit<T, R>(
 ): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let next = 0;
+  // limit<=0 andrebbe letto come "zero worker" ma produrrebbe un vuoto
+  // silenzioso invece di processare items: si normalizza ad almeno 1.
   const workers = Array.from(
-    { length: Math.min(limit, items.length) },
+    { length: Math.max(1, Math.min(limit, items.length)) },
     async () => {
       while (next < items.length) {
         const i = next++;
