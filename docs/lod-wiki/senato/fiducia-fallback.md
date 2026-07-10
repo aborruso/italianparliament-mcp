@@ -27,6 +27,10 @@ voto 19-434-3 (risoluzione)    → ddl_uri = ddl/60233 (propagato ma estraneo)
 
 Se la stessa data ha più DDL diversi (testi unificati), il fallback **non** propaga per non collegare la fiducia al DDL sbagliato.
 
+## Discovery tematica: `--keyword` e le fiducie
+
+Il match keyword sul titolo del DDL collegato (v0.20.0) passa in SPARQL da `osr:oggetto → osr:relativoA → osr:titolo`: sulle fiducie `?ddlTitolo` resta unbound e il filtro le escludeva anche quando il tema cercato era nel titolo del DDL citato per numero nel label (es. `--keyword sicurezza` non trovava la fiducia 19-312-1 sul DDL 59201 "…sicurezza pubblica…"). Dal 2026-07-10 un **supplemento fiducie** le recupera a parte (set piccolo, ~55 nell'intera leg. 19): risolve il numero citato nel label via `osr:fase` leggendo anche `osr:titolo`, e tiene solo quelle il cui titolo matcha la keyword. Residuo: le fiducie con refuso nel numero (es. "DDL n. 1994" per S.1944) non sono recuperabili per keyword — il supplemento usa solo il Fallback 1, non la propagazione intra-seduta.
+
 ## Filtro per `--ddl-uri`
 
 Il filtro diretto `osr:relativoA` escluderebbe le fiducie (prive di `osr:oggetto`). Perciò `--ddl-uri` prima **risolve le date delle sedute** in cui il DDL è stato votato, poi interroga per quelle date e applica i due fallback sopra.

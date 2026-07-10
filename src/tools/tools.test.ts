@@ -495,6 +495,25 @@ describe("Senato tools", () => {
     expect(fiducia?.ddl_uri).toBe("http://dati.senato.it/ddl/60233");
   }, 30000);
 
+  it("senato-votes: --keyword matches the DDL title also for fiducie (no osr:oggetto)", async () => {
+    // Fiducia decreto sicurezza (19-312-1): label "Disegno di legge n.1509.
+    // Votazione questione di fiducia" senza la parola "sicurezza", che vive
+    // solo nel titolo del DDL 59201. Prima del fix il filtro keyword SPARQL
+    // la escludeva (niente osr:oggetto → ?ddlTitolo unbound).
+    const result = await senatoVotesTool.execute({
+      legislature: 19,
+      keyword: "sicurezza",
+      dateFrom: "2025-06-01",
+      dateTo: "2025-06-10",
+      limit: 100,
+      offset: 0,
+    });
+    const fiducia = result.rows.find((r) => r.uri.endsWith("/19-312-1"));
+    expect(fiducia).toBeDefined();
+    expect(fiducia?.bill_number).toBe("1509");
+    expect(fiducia?.ddl_uri).toBe("http://dati.senato.it/ddl/59201");
+  }, 45000);
+
   it("camera-amendments: scrapes counts per sede (sentinel: AC 2696 ref=37/ass=25)", async () => {
     const result = await cameraAmendmentsTool.execute({
       billUri: "http://dati.camera.it/ocd/attocamera.rdf/ac19_2696",
