@@ -47,6 +47,7 @@ const columns = [
   "label",
   "number",
   "type",
+  "sede",
   "date",
   "legislature",
   "ddl_uri",
@@ -171,6 +172,8 @@ OFFSET ${input.offset}`;
         label: r.label ?? "",
         number: r.numero ?? "",
         type: r.tipo ?? "",
+        sede:
+          r.flagComm === "1" ? "commissione" : r.flagComm === "0" ? "assemblea" : "",
         date: "",
         legislature: leg,
         ddl_uri: r.ddl ?? "",
@@ -241,7 +244,11 @@ OFFSET ${input.offset}`;
       uri: "",
       label: "",
       number: "",
-      type: e.committee ? "commissione" : "assemblea",
+      // type (E/G/Q, dominio osr:tipo) non è deducibile in modo affidabile dal
+      // solo AKN: resta vuoto qui, si valorizza eventualmente via withProponents
+      // (parsed.name può contenerlo come testo, es. "Questione pregiudiziale").
+      type: "",
+      sede: e.committee ? "commissione" : "assemblea",
       date: "",
       legislature,
       ddl_uri: input.ddlUri ?? "",

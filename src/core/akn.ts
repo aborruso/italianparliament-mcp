@@ -16,7 +16,8 @@ export function aknAttoPath(ddlUri: string, legislature: number | string): strin
   const id = ddlUri.match(/\/ddl\/(\d+)/)?.[1];
   if (!id) {
     throw new Error(
-      `URI DDL Senato non riconosciuto per il bulk AKN: "${ddlUri}" (atteso http://dati.senato.it/ddl/<n>)`,
+      `URI DDL Senato non riconosciuto per il bulk AKN: "${ddlUri}" (atteso un URI con ` +
+        `"/ddl/<n>", es. http://dati.senato.it/ddl/60233)`,
     );
   }
   return `Leg${legislature}/Atto${id.padStart(8, "0")}`;
