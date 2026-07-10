@@ -439,6 +439,24 @@ describe("Senato tools", () => {
     expect(result.rows.every((r) => r.is_primary === "false")).toBe(true);
   }, 30000);
 
+  it("bill-signatories: Senato parliamentary DDL with deputy signatories is not classified as government", async () => {
+    // Corte dei Conti (ddl/59070, S.1457): iniziativa Parlamentare con primo
+    // firmatario deputato (Foti). Prima del fix l'assenza di osr:senatore
+    // faceva classificare tutti come "Governo (proponente)" senza person_uri.
+    const result = await billSignatoriesTool.execute({
+      billUri: "http://dati.senato.it/ddl/59070",
+      limit: 10,
+    });
+    expect(result.rows.length).toBeGreaterThan(0);
+    expect(result.rows.every((r) => !r.role.startsWith("Governo"))).toBe(true);
+    const primary = result.rows.find((r) => r.is_primary === "true");
+    expect(primary?.role).toBe("primo firmatario");
+    expect(primary?.name).toContain("Foti");
+    // I deputati sono agganciati via ocd:rif_deputato → URI Camera + scheda.
+    expect(primary?.person_uri).toContain("dati.camera.it");
+    expect(primary?.html_url).toContain("camera.it/deputati");
+  }, 30000);
+
   it("amendments: returns amendments for legislature 19", async () => {
     const result = await amendmentsTool.execute({ legislature: 19, limit: 3, offset: 0 });
     expect(result.rows.length).toBe(3);

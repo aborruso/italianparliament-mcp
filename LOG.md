@@ -1,5 +1,9 @@
 # LOG
 
+## 2026-07-10
+
+- **fix `bill-signatories` — i DDL Senato di iniziativa parlamentare arrivati dalla Camera non sono più classificati "Governo (proponente)"** (punto 1 dell'analisi del report `docs/news-agent/2026-07-10_11-10.md`). Root cause: l'euristica assumeva atto governativo quando mancava `osr:senatore`, ma i firmatari deputati (es. `ddl/59070`, S.1457 Corte dei Conti, Dep. Foti) vivono nel grafo senza `osr:senatore` e **con** `ocd:rif_deputato`. Fix: la query legge anche `osr:tipoIniziativa` (discriminante esplicito: Parlamentare/Governativa/Popolare/Regionale/CNEL/…) e `ocd:rif_deputato`; i deputati ora hanno ruolo `primo firmatario`/`cofirmatario` corretto **più** `person_uri`/`html_url` (scheda camera.it, prima vuoti); le iniziative non parlamentari e non governative hanno ruolo `<tipo> (proponente)` invece del falso "Governo". Bug annidato trovato in corsa: `flattenBindings` rende `""` i binding assenti, quindi il fallback `senatore ?? deputato` non scattava mai → `||`. Verificato su 4 casi reali: `ddl/59070` (parl-deputati, il bug), `ddl/55281` (parl-senatori, regressione), `ddl/60233` (governativo, regressione), `ddl/24134` (popolare). Wiki `senato/firmatari-iniziativa.md` estesa con la seconda trappola + censimento `tipoIniziativa`. +1 test, 95/95 verdi, tsc pulito.
+
 ## 2026-07-09
 
 - **v0.22.0 — `senato-votes` multi-DDL + fix EPIPE CLI** (nessun tool nuovo, **43 tool**; 94/94 test verdi, tsc pulito). Campi strutturati per i voti su testi unificati (`ddl_count`, `ambiguous_ddl`, `ddl_uris_json`, `ddl_html_urls_json`, `rss_urls_json`) e pipe Unix interrotte (`| head`) che escono pulite. Dettaglio nelle voci sotto. Rimosso anche il dead code `joinMap` (rompeva `tsc --noEmit`). Wiki OKF covid-2020 esteso ad altri due decreti (Rilancio, Agosto).

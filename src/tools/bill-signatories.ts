@@ -48,14 +48,21 @@ LIMIT ${limit}`;
 }
 
 // Senato: firmatari via osr:iniziativa → senatore, con flag osr:primoFirmatario.
+// osr:tipoIniziativa è il discriminante esplicito del ramo di iniziativa
+// (Governativa / Parlamentare / Popolare / Regionale / CNEL / di ente /
+// di commissione): l'assenza di osr:senatore NON implica atto governativo,
+// perché i DDL parlamentari arrivati dalla Camera hanno presentatori deputati
+// senza osr:senatore ma con ocd:rif_deputato (URI nel grafo Camera).
 function senatoQuery(billUri: string, limit: number): string {
   return `${OSR_PREFIXES}
-SELECT ?presentatore ?senatore ?primoFirmatario
+SELECT ?presentatore ?senatore ?deputato ?primoFirmatario ?tipoIniziativa
 WHERE {
   <${billUri}> osr:iniziativa ?init .
   OPTIONAL { ?init osr:presentatore ?presentatore }
   OPTIONAL { ?init osr:senatore ?senatore }
+  OPTIONAL { ?init ocd:rif_deputato ?deputato }
   OPTIONAL { ?init osr:primoFirmatario ?primoFirmatario }
+  OPTIONAL { ?init osr:tipoIniziativa ?tipoIniziativa }
 }
 LIMIT ${limit}`;
 }
@@ -71,7 +78,7 @@ function cleanCameraName(firstName: string, surname: string, label: string): str
 export const billSignatoriesTool: Tool<typeof inputSchema> = {
   name: "bill-signatories",
   description:
-    "[CAMERA/SENATO] Firmatari di un DDL: primo firmatario e cofirmatari con nome e link al profilo. Per gli atti di iniziativa governativa (decreti-legge e DDL del Governo) i proponenti sono i ministri: il ruolo è 'Governo — <dicastero>' (Camera, es. 'Governo — Ministro dell'Interno') o 'Governo (proponente)' (Senato) invece di 'primo firmatario', con is_primary=false (i proponenti sono più d'uno, non un singolo parlamentare). Il ramo è rilevato automaticamente dall'URI del DDL (ottenibile da bill-progress).",
+    "[CAMERA/SENATO] Firmatari di un DDL: primo firmatario e cofirmatari con nome e link al profilo. Per gli atti di iniziativa governativa (decreti-legge e DDL del Governo) i proponenti sono i ministri: il ruolo è 'Governo — <dicastero>' (Camera, es. 'Governo — Ministro dell'Interno') o 'Governo (proponente)' (Senato) invece di 'primo firmatario', con is_primary=false (i proponenti sono più d'uno, non un singolo parlamentare). Sui DDL Senato di iniziativa parlamentare arrivati dalla Camera i firmatari sono deputati (person_uri nel grafo Camera); altre iniziative (Popolare, Regionale, CNEL) hanno ruolo '<tipo> (proponente)' senza link persona. Il ramo è rilevato automaticamente dall'URI del DDL (ottenibile da bill-progress).",
   inputSchema,
   examples: [
     "italianparliament bill-signatories show --bill-uri http://dati.camera.it/ocd/attocamera.rdf/ac19_2696",
@@ -82,28 +89,35 @@ export const billSignatoriesTool: Tool<typeof inputSchema> = {
 
     if (isSenato) {
       const raw = flattenBindings(await snQuery(senatoQuery(input.billUri, input.limit)));
-      // Riconosci gli atti governativi: se osr:senatore è vuoto, il
-      // presentatore è un membro del governo (stringa, non URI).
-      const isGov = raw.some((r) => !r.senatore && r.presentatore);
       const rows = raw.map((r) => {
-        if (!r.senatore && r.presentatore) {
-          // Atto governativo: presentatore è una stringa tipo
-          // "Pres. Consiglio  Giorgia Meloni (Gov. Meloni-I)".
-          // Non c'è un URI persona → niente html_url.
+        // flattenBindings rende "" i binding assenti: servono || (non ??).
+        const personUri = r.senatore || r.deputato || "";
+        const tipo = r.tipoIniziativa || "";
+        if (personUri || tipo === "Parlamentare") {
           return {
-            name: r.presentatore,
-            role: isGov ? "Governo (proponente)" : "primo firmatario",
-            is_primary: isGov ? "false" : "true",
-            person_uri: "",
-            html_url: "",
+            name: r.presentatore ?? "",
+            role: r.primoFirmatario === "1" ? "primo firmatario" : "cofirmatario",
+            is_primary: r.primoFirmatario === "1" ? "true" : "false",
+            person_uri: personUri,
+            html_url: personHtmlUrl(personUri),
           };
         }
+        // Nessuna entità persona nel grafo: il presentatore vive solo come
+        // stringa (es. "Pres. Consiglio  Giorgia Meloni (Gov. Meloni-I)",
+        // oppure il proponente di un'iniziativa Popolare/Regionale/CNEL)
+        // → niente person_uri/html_url. Senza tipoIniziativa si assume
+        // governativo (comportamento storico).
+        const isGov = !tipo || tipo === "Governativa";
         return {
           name: r.presentatore ?? "",
-          role: r.primoFirmatario === "1" ? "primo firmatario" : "cofirmatario",
-          is_primary: r.primoFirmatario === "1" ? "true" : "false",
-          person_uri: r.senatore ?? "",
-          html_url: personHtmlUrl(r.senatore),
+          role: isGov ? "Governo (proponente)" : `${tipo} (proponente)`,
+          is_primary: isGov
+            ? "false"
+            : r.primoFirmatario === "1"
+              ? "true"
+              : "false",
+          person_uri: "",
+          html_url: "",
         };
       });
       return { rows, columns };

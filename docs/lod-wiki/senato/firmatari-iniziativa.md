@@ -29,6 +29,12 @@ SELECT ?ddl (COUNT(DISTINCT ?init) AS ?nPrimo) WHERE {
 } GROUP BY ?ddl ORDER BY DESC(?nPrimo)
 ```
 
+# Seconda trappola: l'assenza di `osr:senatore` NON implica atto governativo
+
+Non dedurre il ramo di iniziativa dall'assenza dell'URI persona: i DDL parlamentari **arrivati dalla Camera** (es. `ddl/59070`, S.1457 Corte dei Conti, primo firmatario Dep. Foti) hanno presentatori deputati **senza** `osr:senatore` ma **con** `ocd:rif_deputato` (URI nel grafo Camera, `http://dati.camera.it/ocd/deputato.rdf/d<id>_<leg>`). Verificato il 2026-07-10.
+
+Il discriminante esplicito è **`osr:tipoIniziativa`**, presente sul nodo iniziativa con questi valori (censimento sull'intero grafo): `Parlamentare` (780.788), `Governativa` (32.341), `di ente` (21.636), `Popolare` (9.710), `di commissione` (2.144), `Regionale` (1.235), `CNEL` (140). Le iniziative non parlamentari e non governative (Popolare, Regionale, …) hanno anch'esse solo la stringa `osr:presentatore`, senza URI persona.
+
 # Conseguenza per il tooling
 
 Mappare `osr:primoFirmatario=1` su un campo booleano `is_primary` / ruolo `"primo firmatario"` **suggerisce un'unicità che il dato non garantisce**: per un atto di governo si ottengono legittimamente due o più righe `is_primary=true`. Il dato è corretto e fedele alla sorgente; è l'etichetta a essere ambigua. Per i DL, i presentatori con flag sono i **proponenti** (Presidente del Consiglio + ministro competente), quelli senza flag sono **di concerto**.
