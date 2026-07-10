@@ -255,7 +255,9 @@ ORDER BY DESC(?date)`;
     // può essere indietro di giorni. Segnaliamo che un "non trovato" recente non
     // equivale a "non avvenuto", invece di restituire un elenco vuoto silenzioso.
     if (deduped.length === 0) {
-      const hint = recentWindowHint(input.dateFrom, input.dateTo);
+      const hint =
+        confidenceVoteDayBeforeHint(input.confidenceVote, input.dateFrom, input.dateTo) ??
+        recentWindowHint(input.dateFrom, input.dateTo);
       if (hint) return { rows: deduped, columns, hint };
     }
     // bill_number dal testo della descrizione ("DDL 2920-A - VOTO FINALE" → "2920-A").
@@ -311,6 +313,24 @@ SELECT ?a ?id WHERE {
     return { rows: deduped, columns };
   },
 };
+
+/**
+ * Se la ricerca è per voto di fiducia (--confidence-vote true) su una
+ * finestra di date e il risultato è vuoto, la fiducia potrebbe essere stata
+ * votata il giorno PRIMA della data cercata: la stampa riporta tipicamente la
+ * data dell'approvazione finale, non quella della fiducia (es. DL Rilancio
+ * 2020: fiducia 8/7, approvazione finale 9/7). Solo un suggerimento — nessun
+ * retry automatico, per non falsare l'output.
+ */
+function confidenceVoteDayBeforeHint(
+  confidenceVote?: boolean,
+  dateFrom?: string,
+  dateTo?: string,
+): string | undefined {
+  if (confidenceVote !== true) return undefined;
+  if (!dateFrom && !dateTo) return undefined;
+  return "Nessuna fiducia trovata in questa data. La fiducia è spesso votata il giorno PRIMA dell'approvazione finale riportata dalla stampa: riprova con --date-from/--date-to sul giorno precedente (gg-1). Non inventare esito o contatori.";
+}
 
 /**
  * Se la finestra di date interrogata tocca gli ultimi ~14 giorni (o il futuro
