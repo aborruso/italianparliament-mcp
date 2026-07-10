@@ -208,7 +208,8 @@ OFFSET ${input.offset}`;
         columns,
         hint:
           "Nessun emendamento nel LOD e legislatura del DDL non determinabile: il fallback " +
-          "sul bulk AKN GitHub richiede la legislatura. Ripetere passando legislature.",
+          "sul bulk AKN GitHub richiede la legislatura. Ripetere passando il numero di " +
+          "legislatura (es. 19) nel parametro legislature (CLI: --legislature 19).",
       };
     }
 
