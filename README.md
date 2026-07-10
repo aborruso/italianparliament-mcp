@@ -20,6 +20,8 @@ Usabile in tre modi:
 - **Da Claude** — come MCP server integrato in Claude Desktop o Claude Code
 - **Da remoto** — come MCP server HTTP su Cloudflare Worker (`https://italianparliament-mcp.andy-pr.workers.dev`)
 
+> ✅ **Uso consigliato: CLI o MCP installato sulla macchina** (non il Worker remoto). Alcune fonti dati sono raggiungibili solo dalla rete locale: `documenti.camera.it`/`www.camera.it` (tool `camera-amendments`) blocca con una risposta anti-bot il traffico dal range IP datacenter di Cloudflare Workers — verificato in produzione, non un sospetto (issue [#28](https://github.com/ondata/italianparliament-mcp/issues/28)); `bill-text fetch` (testo dei DDL Senato) richiede un browser reale per superare l'AWS WAF di `senato.it` ed è per questo **solo locale**, non nel bundle del Worker. Il Worker resta comodo per provare lo strumento senza installare nulla, ma solo l'uso locale garantisce la copertura completa dei tool.
+
 ## Installazione
 
 ### Come CLI (consigliato — disponibile in tutto il sistema)
@@ -40,8 +42,8 @@ italianparliament search find --name schlein
 
 ### Come server MCP (Claude Desktop / Claude Code)
 
-- **Remoto** (più semplice): usa l'endpoint `https://italianparliament-mcp.andy-pr.workers.dev/mcp`.
-- **Locale**: dopo l'installazione globale, configura il comando `italianparliament-mcp` (trasporto stdio) nel client MCP.
+- **Locale (consigliato)**: dopo l'installazione globale, configura il comando `italianparliament-mcp` (trasporto stdio) nel client MCP — unica modalità con copertura completa dei tool (vedi nota sopra).
+- **Remoto** (più semplice da provare, nessuna installazione): usa l'endpoint `https://italianparliament-mcp.andy-pr.workers.dev/mcp`.
 
 ### Da sorgente (sviluppo)
 
