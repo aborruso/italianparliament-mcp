@@ -48,7 +48,7 @@ italianparliament search find --name schlein
 ### Da sorgente (sviluppo)
 
 ```bash
-git clone https://github.com/aborruso/italianparliament-mcp
+git clone https://github.com/ondata/italianparliament-mcp
 cd italianparliament-mcp
 npm install
 npm run build
@@ -65,8 +65,8 @@ Lo strumento **dà il meglio guidato da un agente AI**. Il repo include due Agen
 Le skill funzionano con diversi agenti (Claude Code, OpenCode, Codex, Copilot e altri). Installazione cross-agent in un comando con [`skills`](https://github.com/vercel-labs/skills):
 
 ```bash
-npx skills add aborruso/italianparliament-mcp --skill italian-parliament-cli
-npx skills add aborruso/italianparliament-mcp --skill italian-parliament-mcp
+npx skills add ondata/italianparliament-mcp --skill italian-parliament-cli
+npx skills add ondata/italianparliament-mcp --skill italian-parliament-mcp
 ```
 
 In alternativa, copia la cartella `skills/<nome>/` e registrala secondo la documentazione del tuo agente.

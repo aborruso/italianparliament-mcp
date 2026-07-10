@@ -64,4 +64,4 @@ SELECT ?v ?d WHERE {
 }
 LIMIT 3
 ```
-[4] Issue: https://github.com/aborruso/italianparliament-mcp/issues/19
+[4] Issue: https://github.com/ondata/italianparliament-mcp/issues/19

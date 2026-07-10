@@ -43,6 +43,7 @@ import { personCareerTool } from "./tools/person-career.js";
 import { peopleTool } from "./tools/people.js";
 import { audizioniTool } from "./tools/audizioni.js";
 import { fetchSenatoText } from "./core/fetch-text.js";
+import { CAPABILITIES, capabilityScore } from "./core/capabilities.js";
 import { formatRows, type Format } from "./core/format.js";
 import { SparqlError } from "./core/client.js";
 import { ZodError } from "zod";
@@ -280,10 +281,10 @@ const billsList = defineCommand({
     },
     "date-from": { type: "string", description: "Start date YYYY-MM-DD" },
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
     "count-only": { type: "boolean", description: "Return only the total count (column count)" },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(billsTool, {
@@ -327,9 +328,9 @@ const votesList = defineCommand({
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
     "bill-code": { type: "string", description: "Filter votes by bill number (e.g. '2807', '1665')" },
     "count-only": { type: "boolean", description: "Return only the total count (column count)" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     let approved: boolean | undefined;
@@ -390,8 +391,8 @@ const searchFind = defineCommand({
       type: "boolean",
       description: "Only senators currently in office (Senato side)",
     },
-    limit: { type: "string", default: "50" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "50", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const chamber = args.chamber as string;
@@ -422,7 +423,7 @@ const legislaturesList = defineCommand({
     ),
   },
   args: {
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(legislaturesTool, {});
@@ -440,8 +441,8 @@ const groupsList = defineCommand({
   },
   args: {
     legislature: { type: "string", description: "Legislature number" },
-    limit: { type: "string", default: "100" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(groupsTool, {
@@ -463,8 +464,8 @@ const senatoGroupsList = defineCommand({
   args: {
     legislature: { type: "string", description: "Legislature number (e.g. 19)" },
     "as-of": { type: "string", description: "Reference date YYYY-MM-DD (default: today). For past legislatures use the last date of that legislature (e.g. 2022-10-12 for XVIII)" },
-    limit: { type: "string", default: "100" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(senatoGroupsTool, {
@@ -488,9 +489,9 @@ const sessionsList = defineCommand({
     legislature: { type: "string", description: "Legislature number" },
     "date-from": { type: "string", description: "Start date YYYY-MM-DD" },
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(sessionsTool, {
@@ -514,9 +515,9 @@ const governmentsList = defineCommand({
   },
   args: {
     legislature: { type: "string", description: "Legislature number" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(governmentsTool, {
@@ -540,7 +541,7 @@ const deputyShow = defineCommand({
     uri: { type: "string", description: "Full URI of the deputy" },
     id: { type: "string", description: "Numeric deputy ID (use with --legislature)" },
     legislature: { type: "string", description: "Legislature number (use with --id)" },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(deputyTool, {
@@ -563,7 +564,7 @@ const senatorShow = defineCommand({
   args: {
     uri: { type: "string", description: "Full URI of the senator", required: true },
     legislature: { type: "string", description: "Legislature number (default: 19)" },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(senatorTool, {
@@ -584,7 +585,7 @@ const billShow = defineCommand({
   },
   args: {
     uri: { type: "string", description: "Full URI of the bill", required: true },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(billTool, { uri: args.uri as string });
@@ -604,9 +605,9 @@ const rolesList = defineCommand({
     "deputy-uri": { type: "string", description: "Full URI of a deputy" },
     "group-uri": { type: "string", description: "Full URI of a parliamentary group" },
     legislature: { type: "string", description: "Legislature number" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(rolesTool, {
@@ -643,9 +644,9 @@ const speechesList = defineCommand({
       type: "boolean",
       description: "Return only the total count",
     },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const chamber = (args.chamber as string) === "senato" ? "senato" : "camera";
@@ -678,9 +679,9 @@ const aicList = defineCommand({
     "date-from": { type: "string", description: "Start date YYYY-MM-DD" },
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
     "count-only": { type: "boolean", description: "Return only the total count (column count)" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(aicTool, {
@@ -711,8 +712,8 @@ const voteDetailShow = defineCommand({
     "vote-uri": { type: "string", description: "Full URI of the votazione", required: true },
     "group-acronym": { type: "string", description: "Filter by group acronym (es. FDI, PD-IDP, M5S)" },
     "vote-type": { type: "string", description: "Filter by vote type: Favorevole|Contrario|Astensione|Non ha votato" },
-    limit: { type: "string", default: "700" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "700", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(voteDetailTool, {
@@ -737,7 +738,7 @@ const attendanceShow = defineCommand({
     uri: { type: "string", description: "Full URI of the deputy" },
     id: { type: "string", description: "Numeric deputy ID (use with --legislature)" },
     legislature: { type: "string", description: "Legislature number (use with --id)" },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(attendanceTool, {
@@ -760,7 +761,7 @@ const senatoAttendanceShow = defineCommand({
   args: {
     "senator-uri": { type: "string", description: "Full URI of the senator", required: true },
     legislature: { type: "string", default: "19", description: "Legislature number (default 19)" },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(senatoAttendanceTool, {
@@ -783,9 +784,9 @@ const groupMembersList = defineCommand({
     "group-uri": { type: "string", description: "Full URI of a parliamentary group" },
     "deputy-uri": { type: "string", description: "Full URI of a deputy (returns all groups)" },
     legislature: { type: "string", description: "Legislature number" },
-    limit: { type: "string", default: "200" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "200", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(groupMembersTool, {
@@ -811,9 +812,9 @@ const senatorGroupMembersList = defineCommand({
     "group-uri": { type: "string", description: "Full URI of a Senato parliamentary group" },
     legislature: { type: "string", description: "Legislature number" },
     "as-of": { type: "string", description: "Date YYYY-MM-DD (default: today)" },
-    limit: { type: "string", default: "200" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "200", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(senatorGroupMembersTool, {
@@ -839,9 +840,9 @@ const govMembersList = defineCommand({
     "government-uri": { type: "string", description: "Full URI of a government" },
     legislature: { type: "string", description: "Legislature number" },
     name: { type: "string", description: "Search by name (case-insensitive)" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(govMembersTool, {
@@ -866,8 +867,8 @@ const committeesList = defineCommand({
   args: {
     chamber: { type: "string", default: "both", description: "camera, senato, or both" },
     legislature: { type: "string", description: "Legislature number (Camera default: 19; Senato: shows only active committees)" },
-    limit: { type: "string", default: "300" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "300", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const chamber = (args.chamber as string) || "both";
@@ -919,9 +920,9 @@ const billProgressList = defineCommand({
       description: "Presentation end date (YYYY-MM-DD)",
     },
     legislature: { type: "string", description: "Legislature number" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const branchRaw = (args.branch as string) || undefined;
@@ -955,8 +956,8 @@ const billSignatoriesShow = defineCommand({
   args: {
     "bill-uri": { type: "string", description: "Full URI of a DDL (Camera or Senato)" },
     "ddl-uri": { type: "string", description: "Alias of --bill-uri (deprecated)" },
-    limit: { type: "string", default: "200" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "200", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const billUri = (args["bill-uri"] as string) || (args["ddl-uri"] as string);
@@ -979,8 +980,8 @@ const billRapporteursList = defineCommand({
   },
   args: {
     "bill-uri": { type: "string", description: "Full URI of a DDL (Camera or Senato)", required: true },
-    limit: { type: "string", default: "100" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(billRapporteursTool, {
@@ -1001,8 +1002,8 @@ const billCommitteesList = defineCommand({
   },
   args: {
     "bill-uri": { type: "string", description: "Full URI of a DDL/atto (Camera or Senato)", required: true },
-    limit: { type: "string", default: "100" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(billCommitteesTool, {
@@ -1030,9 +1031,9 @@ const amendmentsList = defineCommand({
       description:
         "Enrich rows with proponents from the Senato AKN bulk data (one fetch per amendment, slower)",
     },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(amendmentsTool, {
@@ -1061,8 +1062,8 @@ const cameraAmendmentsList = defineCommand({
       required: true,
     },
     "count-only": { type: "boolean", description: "Return only the amendment count per sede" },
-    limit: { type: "string", default: "2000" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "2000", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(cameraAmendmentsTool, {
@@ -1091,9 +1092,9 @@ const rankList = defineCommand({
     },
     legislature: { type: "string", description: "Legislature number" },
     order: { type: "string", default: "desc", description: "desc (most active) or asc (least active)" },
-    limit: { type: "string", default: "20" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "20", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const rankBy = args["rank-by"] as string;
@@ -1140,9 +1141,9 @@ const sindacatoIspettivoList = defineCommand({
     "date-from": { type: "string", description: "Start date YYYY-MM-DD" },
     "date-to": { type: "string", description: "End date YYYY-MM-DD" },
     "count-only": { type: "boolean", description: "Return only total count" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(sindacatoIspettivoTool, {
@@ -1174,9 +1175,9 @@ const committeeMembersList = defineCommand({
     "member-uri": { type: "string", description: "Full URI of a parliamentarian (returns all committees)" },
     legislature: { type: "string", description: "Legislature number" },
     "active-only": { type: "string", default: "true", description: "Only active members: true or false" },
-    limit: { type: "string", default: "200" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "200", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const chamber = (args.chamber as string) || "both";
@@ -1207,9 +1208,9 @@ const memberBillsList = defineCommand({
   args: {
     "member-uri": { type: "string", description: "Full URI of deputy or senator", required: true },
     legislature: { type: "string", description: "Legislature number (default: 19)" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(memberBillsTool, {
@@ -1225,8 +1226,8 @@ const memberBillsList = defineCommand({
 const sparqlArgs = {
   endpoint: { type: "string", description: "camera or senato", required: true },
   query: { type: "string", description: "SPARQL SELECT query", required: true },
-  limit: { type: "string", default: "25" },
-  format: { type: "string", default: "csv" },
+  limit: { type: "string", default: "25", description: "Max rows to return" },
+  format: { type: "string", default: "csv", description: "csv | jsonl" },
 } as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1266,9 +1267,9 @@ const documentsList = defineCommand({
   args: {
     legislature: { type: "string", description: "Legislature number" },
     type: { type: "string", description: "Filter by document type (case-insensitive)" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(documentsTool, {
@@ -1291,7 +1292,7 @@ const personCareerShow = defineCommand({
   },
   args: {
     uri: { type: "string", description: "Deputy or persona URI (Camera)", required: true },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(personCareerTool, { uri: args.uri as string });
@@ -1314,7 +1315,7 @@ const peopleResolve = defineCommand({
         "Comma-separated person URIs (Camera and/or Senato, mixed)",
       required: true,
     },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const uris = (args.uris as string)
@@ -1342,10 +1343,10 @@ const committeeSessionsList = defineCommand({
     legislature: { type: "string", description: "Legislature number (default 19)" },
     "date-from": { type: "string", description: 'Start date inclusive. Senato: AAAA-MM-GG; Camera: AAAAMMGG or AAAA-MM-GG.' },
     "date-to": { type: "string", description: 'End date inclusive. Senato: AAAA-MM-GG; Camera: AAAAMMGG or AAAA-MM-GG.' },
-    limit: { type: "string", default: "200" },
-    offset: { type: "string", default: "0" },
+    limit: { type: "string", default: "200", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
     "count-only": { type: "boolean", description: "Return only the session count, not the full list." },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const chamber = (args.chamber as string) || "both";
@@ -1382,9 +1383,9 @@ const audizioniList = defineCommand({
     keyword: { type: "string", description: 'Keyword in the hearing title, e.g. "prefetto", "Enel", "equo compenso".' },
     "date-from": { type: "string", description: "Start date inclusive. AAAAMMGG or AAAA-MM-GG." },
     "date-to": { type: "string", description: "End date inclusive. AAAAMMGG or AAAA-MM-GG." },
-    limit: { type: "string", default: "200" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "200", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(audizioniTool, {
@@ -1412,8 +1413,8 @@ const groupRankList = defineCommand({
     "rank-by": { type: "string", description: "aic | bills", required: true },
     legislature: { type: "string", description: "Legislature number (default 19)", default: "19" },
     order: { type: "string", description: "desc | asc (default desc)", default: "desc" },
-    limit: { type: "string", default: "20" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "20", description: "Max rows to return" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(groupRankTool, {
@@ -1443,9 +1444,9 @@ const senatoVotesList = defineCommand({
     "date-from": { type: "string", description: "Session date from (YYYY-MM-DD)" },
     "date-to": { type: "string", description: "Session date to (YYYY-MM-DD)" },
     "count-only": { type: "boolean", description: "Return only the total count (column count)" },
-    limit: { type: "string", default: "100" },
-    offset: { type: "string", default: "0" },
-    format: { type: "string", default: "csv" },
+    limit: { type: "string", default: "100", description: "Max rows to return" },
+    offset: { type: "string", default: "0", description: "Offset for pagination" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(senatoVotesTool, {
@@ -1478,7 +1479,7 @@ const senatoVoteDetailShow = defineCommand({
       type: "string",
       description: "Filter by vote: Favorevole | Contrario | Astenuto | Presente non votante | In congedo/missione",
     },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(senatoVoteDetailTool, {
@@ -1499,7 +1500,7 @@ const billTextLinks = defineCommand({
   },
   args: {
     uri: { type: "string", description: "Bill URI (Camera atto or Senato ddl)", required: true },
-    format: { type: "string", default: "csv" },
+    format: { type: "string", default: "csv", description: "csv | jsonl" },
   },
   async run({ args }) {
     const result = await runTool(billTextTool, { uri: args.uri as string });
@@ -1587,50 +1588,12 @@ SCOPERTA COMANDI:
   italianparliament <comando> --help     mostra opzioni ed esempi copiabili
 `;
 
-const CAPABILITIES: { cmd: string; terms: string[]; desc: string }[] = [
-  { cmd: "search find", terms: ["cerca", "nome", "parlamentare", "trova persona", "search"], desc: "Cerca un parlamentare per nome (Camera+Senato)" },
-  { cmd: "person-career show", terms: ["carriera", "governo", "ministro", "doppio incarico", "legislature", "wikidata"], desc: "Carriera unificata di una persona (mandati + governo)" },
-  { cmd: "deputy show / senator show", terms: ["scheda", "deputato", "senatore", "anagrafica", "nascita"], desc: "Scheda di un parlamentare" },
-  { cmd: "bills list / bill show", terms: ["disegno di legge", "ddl camera", "proposta di legge", "atti"], desc: "Disegni di legge Camera" },
-  { cmd: "people resolve", terms: ["nome", "nomi", "risolvi uri", "chi è", "uri persona", "nominativo", "batch"], desc: "Risolve URI persona (Camera+Senato) ai nomi, in batch" },
-  { cmd: "bill-progress list", terms: ["iter", "ddl senato", "stato ddl", "iter camera", "timeline atto"], desc: "Iter dei DDL al Senato; con --uri <atto Camera> la timeline iter della Camera" },
-  { cmd: "bill-rapporteurs list", terms: ["relatore", "relatori", "relatrice", "chi relaziona"], desc: "Relatori di un DDL (Camera o Senato, dall'URI)" },
-  { cmd: "bill-committees list", terms: ["commissione", "commissioni", "assegnazione", "assegnato", "sede referente", "sede consultiva"], desc: "Commissioni a cui un DDL/atto è assegnato (Camera o Senato, dall'URI)" },
-  { cmd: "bill-text links / fetch", terms: ["testo", "articolato", "pdf", "testo ddl", "contenuto legge"], desc: "Link al testo di un DDL e download/conversione (Senato)" },
-  { cmd: "amendments list", terms: ["emendamenti", "ostruzionismo"], desc: "Emendamenti Senato (--ddl-uri per un DDL)" },
-  { cmd: "committee-sessions list", terms: ["commissione", "sedute", "lavori commissione", "attività commissione", "follow commissione", "bollettini commissione"], desc: "Attività delle commissioni: iter di un DDL (--ddl-uri) o sedute di una commissione per data (--committee-uri/--committee-name + --chamber, Camera+Senato)" },
-  { cmd: "votes list / vote-detail show", terms: ["votazione", "voto", "come ha votato", "fiducia", "camera"], desc: "Votazioni Camera e voto individuale" },
-  { cmd: "senato-votes list / senato-vote-detail show", terms: ["votazione senato", "voto senatore", "ribelli senato"], desc: "Votazioni Senato e voto individuale" },
-  { cmd: "attendance show", terms: ["presenze", "assenze", "quante volte non ha votato", "attivismo deputato"], desc: "Conteggio aggregato voti di un deputato per legislatura" },
-  { cmd: "senato-attendance show", terms: ["presenze senato", "assenze senatore", "in missione", "attivismo senatore"], desc: "Conteggio aggregato voti di un senatore per legislatura" },
-  { cmd: "aic list", terms: ["interrogazione", "interpellanza", "mozione", "sindacato ispettivo camera", "tema"], desc: "Atti di indirizzo e controllo Camera (--keyword)" },
-  { cmd: "sindacato-ispettivo list", terms: ["interrogazione senato", "interpellanza senato"], desc: "Sindacato ispettivo Senato" },
-  { cmd: "groups list / group-members list", terms: ["gruppo", "gruppi", "composizione gruppo"], desc: "Gruppi parlamentari Camera" },
-  { cmd: "rank list / group-rank list", terms: ["classifica", "ranking", "più attivi", "top", "per gruppo"], desc: "Classifiche per persona o per gruppo" },
-  { cmd: "gov-members list", terms: ["ministro", "governo", "sottosegretario", "rimpasto"], desc: "Membri del governo" },
-  { cmd: "committees list / committee-members list", terms: ["commissioni", "membri commissione"], desc: "Commissioni Camera+Senato e loro membri" },
-  { cmd: "speeches list", terms: ["intervento", "discorso", "aula"], desc: "Interventi in aula" },
-  { cmd: "sparql query", terms: ["sparql", "query libera", "dato non coperto"], desc: "Query SPARQL libera (ultima risorsa)" },
-];
-
 const guideCmd = defineCommand({
   meta: { name: "guide", description: "Print the recommended workflow for orchestrating the CLI step by step" },
   run() {
     process.stdout.write(GUIDE_TEXT);
   },
 });
-
-function capabilityScore(cap: { cmd: string; terms: string[]; desc: string }, q: string): number {
-  let s = 0;
-  for (const t of cap.terms) {
-    if (t === q) s = Math.max(s, 100);
-    else if (t.includes(q)) s = Math.max(s, 70);
-    else if (q.includes(t)) s = Math.max(s, 60);
-  }
-  if (cap.cmd.toLowerCase().includes(q)) s = Math.max(s, 50);
-  if (cap.desc.toLowerCase().includes(q)) s = Math.max(s, 40);
-  return s;
-}
 
 const whichCmd = defineCommand({
   meta: {
@@ -1646,24 +1609,41 @@ const whichCmd = defineCommand({
   },
   args: {
     capability: { type: "positional", description: "Capability to look up (e.g. 'testo ddl')", required: true },
-    json: { type: "boolean", description: "Output ranked JSON [{command, score, description}]", default: false },
+    json: { type: "boolean", description: "Output ranked JSON [{command, score, description, example}]", default: false },
   },
   run({ args }) {
     const q = String(args.capability ?? "").toLowerCase().trim();
-    const ranked = CAPABILITIES.map((c) => ({ command: c.cmd, score: capabilityScore(c, q), description: c.desc }))
+    // Query vuota (es. which "   "): la stringa vuota è contenuta in ogni
+    // term, quindi matcherebbe l'intero catalogo con exit 0 — fuorviante.
+    // Messaggio su stderr (stdout resta per risultati/JSON, come gli hint).
+    if (!q) {
+      process.stderr.write(
+        `Indicare una capacità da cercare, es.: italianparliament which "testo ddl". ` +
+          `Per il catalogo completo: italianparliament guide.\n`,
+      );
+      process.exit(2);
+    }
+    const ranked = CAPABILITIES.map((c) => ({
+      command: c.cmd,
+      score: capabilityScore(c, q),
+      description: c.desc,
+      example: c.example,
+    }))
       .filter((c) => c.score > 0)
       .sort((a, b) => b.score - a.score);
 
     if (args.json) {
       process.stdout.write(JSON.stringify(ranked) + "\n");
     } else if (ranked.length === 0) {
-      process.stdout.write(
+      // Su stderr: stdout resta per risultati/JSON (pipeline-friendly).
+      process.stderr.write(
         `Nessun comando trovato per "${q}". Prova 'italianparliament guide' per il flusso completo, o '--help'.\n`,
       );
     } else {
       for (const m of ranked) {
-        process.stdout.write(`${m.command}\n  ${m.description}\n`);
+        process.stdout.write(`${m.command} — ${m.description}\n  es.: ${m.example}\n`);
       }
+      process.stdout.write(`\nDettagli e altre opzioni: italianparliament <comando> --help\n`);
     }
     // Confidenza via exit code: 0 = match trovato, 2 = nessun match.
     process.exit(ranked.length > 0 ? 0 : 2);

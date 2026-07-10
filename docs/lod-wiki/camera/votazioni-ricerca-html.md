@@ -123,4 +123,4 @@ Non integrato nel progetto: è scraping HTML di un endpoint non documentato (fra
 
 [1] Intercettazione traffico con agent-browser (`network requests`) il 2026-07-01: nessuna chiamata XHR, singola POST server-rendered.
 [2] Verifica CDDNUMEROATTO whitelist: `document.getElementById('CDDNUMEROATTO').options` → 217 elementi, ultimo "DDL n. 2488-B".
-[3] https://github.com/aborruso/italianparliament-mcp/issues/21
+[3] https://github.com/ondata/italianparliament-mcp/issues/21
