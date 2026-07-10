@@ -566,6 +566,7 @@ describe("Senato tools", () => {
     });
     expect(result.rows.length).toBe(2);
     expect(result.rows[0].first_proponent).not.toBe("");
+    expect(result.rows[0].first_proponent_uri).toContain("dati.senato.it");
     expect(result.rows[0].number).not.toBe("");
   }, 30000);
 

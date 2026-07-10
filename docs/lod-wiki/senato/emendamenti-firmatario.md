@@ -41,6 +41,8 @@ Trappola accesso: `www.senato.it` è **dietro AWS WAF** — `curl` diretto resti
 
 Il tool `amendments` ora espone il proponente con `withProponents`/`--with-proponents`: il testo AKN si recupera **senza WAF** dal bulk GitHub del Senato ([[akn-bulk-data]]) convertendo `osr:URLTestoXml` in URL raw (pura sostituzione di stringa: ultimo segmento → `<path atto>/emend[c]/<id>-em.akn.xml`, con `osr:flagCommissione` a decidere `emend/` vs `emendc/`). Simmetria raggiunta con `camera-amendments` (`first_signatory`). Il limite LOD a monte resta: nessun firmatario emendamento nel grafo di nessuna delle due camere.
 
+Colonne emesse: `first_proponent`/`proponents` (nomi) **e** `first_proponent_uri`/`proponents_uri` (URI `dati.senato.it/<id>` da `an:TLCPerson`, stesso ordine dei nomi): l'URI è ciò che permette il join con altri tool (es. risalire alla scheda del senatore), il nome da solo non basta (omonimie, forma non normalizzata).
+
 ## Due varianti del markup docProponent (verificate 2026-07-10)
 
 - **File d'Assemblea** (`emend/`): nome come testo diretto del tag — `<an:docProponent ...>DI GIROLAMO</an:docProponent>`.

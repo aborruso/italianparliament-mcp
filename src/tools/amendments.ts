@@ -34,8 +34,8 @@ const inputSchema = z.object({
     .boolean()
     .optional()
     .describe(
-      "Arricchisce ogni riga con i proponenti (primo firmatario e cofirmatari) " +
-        "estratti dal testo AKN del bulk GitHub del Senato: un fetch puntuale per " +
+      "Arricchisce ogni riga con i proponenti (primo firmatario e cofirmatari, nome e URI " +
+        "persona) estratti dal testo AKN del bulk GitHub del Senato: un fetch puntuale per " +
         "emendamento, quindi più lento. Il proponente NON è nel LOD.",
     ),
   limit: z.number().int().min(1).max(1000).default(100),
@@ -56,7 +56,9 @@ const columns = [
   "akn_xml_url",
   "source",
   "first_proponent",
+  "first_proponent_uri",
   "proponents",
+  "proponents_uri",
 ];
 
 // Il dataset osr:Emendamento del LOD può avere lunghi periodi senza aggiornamenti
@@ -75,7 +77,9 @@ async function enrichProponents(rows: Row[]): Promise<void> {
       const xml = await fetchAknFile(String(row.akn_xml_url));
       const parsed = parseAknAmendment(xml);
       row.first_proponent = parsed.proponents[0]?.name ?? "";
+      row.first_proponent_uri = parsed.proponents[0]?.uri ?? "";
       row.proponents = parsed.proponents.map((p) => p.name).join(" | ");
+      row.proponents_uri = parsed.proponents.map((p) => p.uri).join(" | ");
       if (!row.number) row.number = parsed.number;
       if (!row.label)
         row.label = [parsed.name, parsed.number].filter(Boolean).join(" ");
@@ -166,7 +170,9 @@ OFFSET ${input.offset}`;
             : "",
         source: "lod",
         first_proponent: "",
+        first_proponent_uri: "",
         proponents: "",
+        proponents_uri: "",
       };
     });
 
@@ -231,7 +237,9 @@ OFFSET ${input.offset}`;
       ),
       source: "akn",
       first_proponent: "",
+      first_proponent_uri: "",
       proponents: "",
+      proponents_uri: "",
     }));
     if (input.withProponents) await enrichProponents(aknRows);
 
