@@ -1226,7 +1226,7 @@ const sparqlArgs = {
   endpoint: { type: "string", description: "camera or senato", required: true },
   query: { type: "string", description: "SPARQL SELECT query", required: true },
   limit: { type: "string", default: "25", description: "Max rows to return" },
-  format: { type: "string", default: "csv" },
+  format: { type: "string", default: "csv", description: "csv | jsonl" },
 } as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1658,7 +1658,7 @@ const whichCmd = defineCommand({
   },
   args: {
     capability: { type: "positional", description: "Capability to look up (e.g. 'testo ddl')", required: true },
-    json: { type: "boolean", description: "Output ranked JSON [{command, score, description}]", default: false },
+    json: { type: "boolean", description: "Output ranked JSON [{command, score, description, example}]", default: false },
   },
   run({ args }) {
     const q = String(args.capability ?? "").toLowerCase().trim();
