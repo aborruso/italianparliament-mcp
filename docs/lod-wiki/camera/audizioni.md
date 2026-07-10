@@ -12,7 +12,10 @@ Il tool `audizioni list` estrae le audizioni delle commissioni Camera. Due modal
 
 ## Leg. 19: via titolo della discussione
 
-Le audizioni non sono modellate come entità dedicate. La legislatura corrente (19) non ha `dc:type="Audizione"` sulle `ocd:discussione`. La discovery passa dal **testo del `dc:title`** della `ocd:discussione` collegata a un `ocd:dibattito`: il titolo contiene "Audizione di …". Una REGEX server-side esclude i falsi positivi d'agenda ("… allo svolgimento di un'audizione").
+Le audizioni non sono modellate come entità dedicate. La legislatura corrente (19) non ha `dc:type="Audizione"` sulle `ocd:discussione`.
+
+> **Conferma dal gestore** (scambio email, luglio 2026): i dati delle audizioni **non risultano maggiormente strutturati**. Coincide con la verifica indipendente sull'endpoint: non esiste un'entità "audizione", il dato vive solo nel testo del `dc:title`. La causa è la stessa dell'assenza degli emendamenti — ontologia OCD con la parte centrale ferma al 2009-2011 (vedi [freschezza e provenienza](../freschezza-e-autorevolezza.md)).
+ La discovery passa dal **testo del `dc:title`** della `ocd:discussione` collegata a un `ocd:dibattito`: il titolo contiene "Audizione di …". Una REGEX server-side esclude i falsi positivi d'agenda ("… allo svolgimento di un'audizione").
 
 Cosa si ottiene per ogni audizione:
 - `date` — dal pattern URI del dibattito

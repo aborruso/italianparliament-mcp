@@ -18,6 +18,8 @@ Gli **emendamenti della Camera non sono modellati nel LOD OCD**. Verificato il 2
 
 **Conseguenza operativa**: il tool `amendments` (oggi `osr:Emendamento`, solo Senato) non è estendibile alla Camera via SPARQL — non c'è dato da interrogare. Vedi issue #19. Per gli emendamenti *votati* si può risalire dal testo delle votazioni collegate all'atto.
 
+**Conferma dal gestore** (scambio email, luglio 2026): gli emendamenti **non sono proprio presenti nel repository** RDF. L'assenza non è un limite di query o di tooling: il dato non è modellato a monte. Coerente con la causa strutturale generale — l'ontologia OCD ha la parte centrale ferma al 2009-2011 (vedi [freschezza e provenienza](../freschezza-e-autorevolezza.md)) — quindi un ambito recente come gli emendamenti non ha mai ricevuto una classe dedicata.
+
 ## Il dato esiste fuori dal LOD: l'app HTML `getProposteEmendative`
 
 Verificato il 2026-07-05 (browser + curl): pur **assenti dal LOD**, gli emendamenti Camera sono pubblicati integralmente dall'app HTML `https://documenti.camera.it/apps/emendamenti/getProposteEmendative.aspx`, **attiva anche per la legislatura 19**, per singolo atto e per sede (referente/Assemblea), con articolo, numero, primo firmatario e link al testo del singolo emendamento.

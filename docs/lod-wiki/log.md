@@ -1,5 +1,9 @@
 # LOD wiki — log
 
+## 2026-07-10
+
+* **Update**: [freschezza e provenienza](/freschezza-e-autorevolezza.md), [assenti Camera](/camera/assenti.md), [audizioni Camera](/camera/audizioni.md) — recepite (spersonalizzate, come evidenze sul dato) le conferme del **gestore del repository LOD Camera** ricevute via scambio email. Tre punti: (1) l'**ontologia OCD è ferma al 2009-2011** per la parte centrale, con soli sviluppi parziali sulle votazioni — è la causa a monte degli ambiti non modellati; (2) gli **emendamenti non sono presenti** nel repository RDF (conferma dell'assenza già verificata su endpoint, issue #19); (3) le **audizioni non sono maggiormente strutturate** (conferma del recupero solo-da-titolo). Aggiunta a `freschezza-e-autorevolezza.md` la sezione "provenienza": il RDF è l'ultimo anello di un processo distribuito, pubblicato solo alla ricezione delle triple dai singoli produttori dei database sorgente → spiega perché non esiste un "as-of" affidabile. Conferma reciproca: osservazione empirica e provenienza dichiarata convergono.
+
 ## 2026-07-09
 
 * **Update**: [sedute commissione Senato](/senato/sedute-commissione.md) — esplorazione live via agent-browser (WAF, `curl` bloccato) per capire dove vivono le audizioni. Confermato il mapping URI commissione → path JSON (`commissione/<tipo_cod_comm>-<cod_comm>`). Testato `descr_tipo_veste` su 2 commissioni (Affari Costituzionali, Affari sociali/sanità): solo 4 valori, zero "audiz" nel JSON — la classificazione JSON non distingue mai un'audizione. Scoperto che il "Documento completo" del resoconto (`show-doc?...&part=doc_dc`) espone il testo integrale scrapeable con attribuzione per senatore, ma nel campione testato (2 resoconti) non c'era un'audizione in agenda, quindi nessun esempio positivo trovato in quella via.

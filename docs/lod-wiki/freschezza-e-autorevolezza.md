@@ -8,6 +8,16 @@ timestamp: 2026-07-02
 
 Il LOD di Camera e Senato è una rappresentazione **derivata e pubblicata a lotti** dell'attività parlamentare, non la fonte primaria. Per gli usi giornalistici questo ha due conseguenze da tenere sempre presenti: (1) il grafo può essere **indietro** rispetto alla realtà, e (2) non c'è un modo affidabile per sapere *a che data* è aggiornato.
 
+# Perché a lotti: la provenienza del dato (conferma del gestore)
+
+Il gestore del repository LOD della Camera ha confermato (scambio email, luglio 2026) l'architettura che spiega i comportamenti osservati sull'endpoint. Sono note di **provenienza**, non attribuite a persone: descrivono come è fatto il sistema.
+
+- **L'ontologia OCD è datata.** La parte centrale del modello risale al **2009-2011**, con soli sviluppi parziali successivi (principalmente sulle **votazioni**). I dati riflettono quell'organizzazione: è la causa a monte per cui interi ambiti recenti risultano non modellati o modellati in modo grezzo.
+- **Pubblicazione a valle di un processo distribuito.** Il repository/portale RDF è **l'ultimo anello** di una catena che parte dai **singoli produttori delle triple** (i gestori dei rispettivi database sorgente). Il sistema pubblica RDF **solo nel momento in cui riceve i dati** dai produttori. Non c'è quindi un ciclo di aggiornamento centralizzato e prevedibile: la freschezza dipende dal flusso a monte (e dalla disponibilità del personale interno).
+- **Conseguenza sul segnale di freschezza.** Questo spiega perché `dcterms:modified` è congelato (vedi sotto): non esiste un timestamp di "ultimo caricamento reale" perché il caricamento è per-lotto e per-produttore, non un evento unico datato.
+
+Questa spiegazione **converge** con due assenze verificate in modo indipendente sull'endpoint: gli [emendamenti Camera assenti dal LOD](camera/assenti.md) e le [audizioni non strutturate come entità](camera/audizioni.md). Osservazione empirica ("il dato non c'è / è solo testo libero") e provenienza dichiarata dal gestore ("ontologia ferma, ambiti non modellati") descrivono lo stesso fenomeno da due lati.
+
 # Freschezza: nessun segnale affidabile
 
 Verificato il 2026-07-02 sui due endpoint.
