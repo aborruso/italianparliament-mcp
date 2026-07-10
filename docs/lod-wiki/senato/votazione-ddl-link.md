@@ -49,4 +49,4 @@ Estesa il 1° luglio 2026 (pomeriggio) dopo aver scoperto che gli Ordini del Gio
 # Citations
 
 [1] Indagine LOD del 2026-07-01 (issue #21): enumerazione percorsi + validazione resolver su `19-432-3`→`ddl/60201`, `19-21-1`→`ddl/56123`, `19-389-7`→`ddl/59837`.
-[2] https://github.com/aborruso/italianparliament-mcp/issues/21
+[2] https://github.com/ondata/italianparliament-mcp/issues/21

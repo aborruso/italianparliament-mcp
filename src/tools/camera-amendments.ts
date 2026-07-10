@@ -15,7 +15,7 @@ import type { Tool } from "./types.js";
 // noti per accorgersi di eventuali cambi di markup.
 
 const EME_BASE = "https://documenti.camera.it/apps/emendamenti/";
-const UA = "Mozilla/5.0 (italianparliament-mcp; +https://github.com/aborruso/italianparliament-mcp)";
+const UA = "Mozilla/5.0 (italianparliament-mcp; +https://github.com/ondata/italianparliament-mcp)";
 
 const inputSchema = z.object({
   billUri: z

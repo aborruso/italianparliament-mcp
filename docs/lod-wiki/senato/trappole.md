@@ -39,4 +39,4 @@ Quando la legislatura è codificata **solo nell'URI**, un range filter su `?s` +
 # Citations
 
 [1] Verifica `CONCAT`/matching nomi (2026-07-01): `sparql query --endpoint senato` su `"Ignazio La Russa"` → `senatore/1275`.
-[2] Issue matching nomi: https://github.com/aborruso/italianparliament-mcp/issues/20
+[2] Issue matching nomi: https://github.com/ondata/italianparliament-mcp/issues/20
