@@ -21,7 +21,7 @@ import { govMembersTool } from "./gov-members.js";
 import { committeesTool } from "./committees.js";
 import { billProgressTool } from "./bill-progress.js";
 import { billSignatoriesTool } from "./bill-signatories.js";
-import { amendmentsTool, enrichProponents, checkAknTruncation } from "./amendments.js";
+import { amendmentsTool, enrichProponents, checkAknTruncation, aknEmptyHint } from "./amendments.js";
 import { senatoVotesTool } from "./senato-votes.js";
 import { cameraAmendmentsTool } from "./camera-amendments.js";
 import { documentsTool } from "./documents.js";
@@ -557,6 +557,17 @@ describe("Senato tools", () => {
     expect(result.rows.length).toBe(0);
     expect(result.hint).toContain("bulk AKN");
   }, 30000);
+
+  it("aknEmptyHint: vuoto genuino (entriesLength 0) vs pagina oltre la fine (entriesLength > 0)", () => {
+    // Vuoto genuino: nessuna fonte ha nulla per l'atto.
+    expect(aknEmptyHint(0, 0)).toContain("né nel LOD né nel bulk");
+    // Pagina oltre la fine: il bulk ha risultati, ma l'offset richiesto li supera —
+    // NON deve leggersi come "nessun emendamento" (bug segnalato da Copilot).
+    const pastEnd = aknEmptyHint(799, 900);
+    expect(pastEnd).not.toContain("né nel LOD né nel bulk");
+    expect(pastEnd).toContain("799");
+    expect(pastEnd).toContain("900");
+  });
 
   it("amendments: withProponents estrae il primo firmatario dal testo AKN", async () => {
     // Il bulk AKN contiene anche file stub vuoti (200 OK, zero contenuto —

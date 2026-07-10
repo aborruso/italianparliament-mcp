@@ -148,6 +148,25 @@ export function checkAknTruncation(
   }
 }
 
+// entriesLength === 0: il bulk AKN non ha nulla per questo atto (come il LOD)
+// — vuoto genuino. entriesLength > 0 con pagina vuota: l'offset richiesto
+// pagina oltre la fine di un risultato non vuoto, non è un'assenza — hint
+// distinto per non farlo leggere come "nessun emendamento" (Copilot review).
+// export solo per test unitario mirato (offline).
+export function aknEmptyHint(entriesLength: number, offset: number): string {
+  if (entriesLength === 0) {
+    return (
+      "Nessun emendamento per questo DDL né nel LOD né nel bulk AKN GitHub del Senato " +
+      "(aggiornato quotidianamente). Con entrambe le fonti vuote l'assenza di emendamenti " +
+      "PRESENTATI è plausibile, ma va confermata sulla scheda del DDL su senato.it."
+    );
+  }
+  return (
+    `Nessun emendamento in questa pagina: il bulk AKN ne ha ${entriesLength} per questo DDL, ` +
+    `ma offset ${offset} è oltre la fine. Riprovare con un offset più basso (0-${entriesLength - 1}).`
+  );
+}
+
 export const amendmentsTool: Tool<typeof inputSchema> = {
   name: "amendments",
   description:
@@ -308,10 +327,7 @@ OFFSET ${input.offset}`;
       return {
         rows: aknRows,
         columns,
-        hint:
-          "Nessun emendamento per questo DDL né nel LOD né nel bulk AKN GitHub del Senato " +
-          "(aggiornato quotidianamente). Con entrambe le fonti vuote l'assenza di emendamenti " +
-          "PRESENTATI è plausibile, ma va confermata sulla scheda del DDL su senato.it.",
+        hint: aknEmptyHint(entries.length, input.offset),
       };
     }
     return { rows: aknRows, columns };
