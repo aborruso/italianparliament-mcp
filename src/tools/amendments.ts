@@ -59,9 +59,9 @@ const columns = [
   "proponents",
 ];
 
-// Il dataset osr:Emendamento del LOD è fermo al 2024-08-09 (wiki
-// senato/emendamenti-freschezza.md): oltre quella data il fallback è il bulk
-// AKN su GitHub (wiki senato/akn-bulk-data.md, issue #45).
+// Il dataset osr:Emendamento del LOD può avere lunghi periodi senza aggiornamenti
+// (wiki senato/emendamenti-freschezza.md): quando vuoto con ddlUri il fallback è il
+// bulk AKN su GitHub (wiki senato/akn-bulk-data.md, issue #45).
 const PROPONENT_CONCURRENCY = 4;
 
 type AknEntry = { file: string; committee: boolean };

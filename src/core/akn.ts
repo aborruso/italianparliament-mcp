@@ -96,16 +96,27 @@ export function parseAknAmendment(xml: string): AknAmendment {
   const attr = (re: RegExp) => xml.match(re)?.[1]?.trim() ?? "";
   const number = attr(/<an:FRBRnumber[^>]*\bvalue="([^"]*)"/);
   const name = attr(/<an:FRBRname[^>]*\bvalue="([^"]*)"/);
-  const date = attr(/<an:FRBRdate[^>]*\bdate="([^"]*)"[^>]*\bname="presentazione"/);
+  // Ordine degli attributi XML non garantito dallo standard: si isola il tag
+  // FRBRdate della presentazione, poi si estrae date= indipendentemente da
+  // dove compare rispetto a name=.
+  const dateTagMatch = xml.match(
+    /<an:FRBRdate\b[^>]*\bname="presentazione"[^>]*>/,
+  );
+  const date = dateTagMatch
+    ? (dateTagMatch[0].match(/\bdate="([^"]*)"/)?.[1]?.trim() ?? "")
+    : "";
 
   // an:TLCPerson mappa l'id interno del documento all'URI dati.senato.it della
   // persona; showAs è il nome (nei file di commissione è più completo del testo
-  // del docProponent, es. "Bartolomeo Amidei" vs "Amidei").
+  // del docProponent, es. "Bartolomeo Amidei" vs "Amidei"). Stessa cautela
+  // sull'ordine attributi: si isola il tag, poi si estrae ogni attributo.
   const person = new Map<string, { uri: string; showAs: string }>();
-  for (const m of xml.matchAll(
-    /<an:TLCPerson\b[^>]*\bid="([^"]+)"[^>]*\bhref="([^"]*)"[^>]*?(?:\bshowAs="([^"]*)")?\s*\/?>/g,
-  )) {
-    person.set(m[1], { uri: m[2], showAs: m[3] ?? "" });
+  for (const m of xml.matchAll(/<an:TLCPerson\b[^>]*\/?>/g)) {
+    const tag = m[0];
+    const id = tag.match(/\bid="([^"]+)"/)?.[1];
+    const uri = tag.match(/\bhref="([^"]*)"/)?.[1] ?? "";
+    const showAs = tag.match(/\bshowAs="([^"]*)"/)?.[1] ?? "";
+    if (id) person.set(id, { uri, showAs });
   }
   const proponents: { name: string; uri: string }[] = [];
   const seen = new Set<string>();

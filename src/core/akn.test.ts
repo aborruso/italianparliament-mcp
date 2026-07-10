@@ -108,6 +108,19 @@ describe("parseAknAmendment", () => {
     ]);
   });
 
+  it("estrae date e URI persona anche con ordine attributi invertito (XML non garantisce l'ordine)", () => {
+    const shuffledXml = `<an:akomaNtoso xmlns:an="http://docs.oasis-open.org/legaldocml/ns/akn/3.0/CSD03">
+      <an:FRBRdate name="presentazione" date="2026-07-01"/>
+      <an:TLCPerson showAs="DI GIROLAMO" href="http://dati.senato.it/32619" id="IDAAA"/>
+      <an:docProponent refersTo="#IDAAA" as="#tipoSenatore">DI GIROLAMO</an:docProponent>
+    </an:akomaNtoso>`;
+    const a = parseAknAmendment(shuffledXml);
+    expect(a.date).toBe("2026-07-01");
+    expect(a.proponents).toEqual([
+      { name: "DI GIROLAMO", uri: "http://dati.senato.it/32619" },
+    ]);
+  });
+
   it("estrae i proponenti annidati in an:span (file di commissione) preferendo showAs", () => {
     // Nei file emendc/ il nome è dentro <an:span> e showAs ha il nome completo.
     const commXml = `<an:akomaNtoso xmlns:an="http://docs.oasis-open.org/legaldocml/ns/akn/3.0/CSD03">
