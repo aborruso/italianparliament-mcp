@@ -29,12 +29,14 @@ const inputSchema = z.object({
     .regex(/^\d+$/)
     .optional()
     .describe(
-      "Numero dell'atto Senato (es. 1809 per S.1809). Da abbinare a --branch per il ramo. Include automaticamente le letture successive della navetta con suffisso (es. --number 1353 torna S.1353 E S.1353-B). Se ometti --legislature, con --number la CLI usa di default la legislatura corrente (risolta dinamicamente dall'endpoint Camera) per evitare omonimi storici. Lo stesso numero può esistere in entrambi i rami (C.1809 e S.1809).",
+      "Numero dell'atto (es. 1809). Da abbinare a --branch per il ramo. Con --branch S interroga il repertorio Senato (S.1809); con --branch C risolve l'atto Camera C.1809 e ne restituisce la timeline degli stati. Per il ramo S include automaticamente le letture successive della navetta con suffisso (es. --number 1353 torna S.1353 E S.1353-B). Se ometti --legislature, con --number si usa di default la legislatura corrente (risolta dinamicamente dall'endpoint Camera) per evitare omonimi storici. Lo stesso numero può esistere in entrambi i rami (C.1809 e S.1809).",
     ),
   branch: z
     .enum(["S", "C"])
     .optional()
-    .describe("Ramo per --number: S (Senato, default) o C (Camera)."),
+    .describe(
+      "Ramo per --number. S (default): repertorio Senato, restituisce lo STATO CORRENTE del DDL (una riga). C: atto Camera, restituisce la TIMELINE COMPLETA degli stati attraversati (una riga per stato, con date). L'asimmetria riflette la fonte: la Camera pubblica lo storico degli stati, il Senato solo lo stato corrente (la sua timeline vive nel feed RSS).",
+    ),
   dateFrom: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -73,7 +75,7 @@ const columns = [
 export const billProgressTool: Tool<typeof inputSchema> = {
   name: "bill-progress",
   description:
-    "Iter legislativo di un disegno di legge. È la SPINA DORSALE per ricostruire l'iter completo di una legge: usalo per le date reali di ogni fase, non generare la timeline a memoria. [SENATO] senza --uri: lista DDL al Senato con stato corrente dell'iter (assegnato, esame in commissione, approvato, ecc.), filtrabile per legislatura, numero atto (--number, es. 1809 per S.1809, con --branch S|C), parola chiave nel titolo e intervallo date. Con --number ma senza --legislature, il default è la legislatura 19 per evitare omonimi storici rumorosi. [CAMERA] con --uri <atto Camera>: cronologia completa (timeline) di tutti gli stati attraversati dall'atto, in ordine cronologico. Stesse colonne in entrambi i casi. Per collegare un atto Camera al suo DDL Senato usa --number (il numero letto dalla timeline Camera) + --branch S: MAI per keyword, per non pescare un atto omonimo diverso.",
+    "Iter legislativo di un disegno di legge. È la SPINA DORSALE per ricostruire l'iter completo di una legge: usalo per le date reali di ogni fase, non generare la timeline a memoria. [SENATO] senza --uri: lista DDL al Senato con stato corrente dell'iter (assegnato, esame in commissione, approvato, ecc.), filtrabile per legislatura, numero atto (--number 1809 --branch S), parola chiave nel titolo e intervallo date. Con --number ma senza --legislature, il default è la legislatura corrente per evitare omonimi storici rumorosi. [CAMERA] cronologia completa (timeline) di tutti gli stati attraversati dall'atto, in ordine cronologico, in DUE modi: con --uri <atto Camera>, oppure con --number <n> --branch C (risolve l'atto Camera ac<leg>_<n>). Stesse colonne in entrambi i casi. NB: --branch C dà la timeline Camera (una riga per stato), --branch S dà lo stato corrente del DDL al Senato (una riga): l'asimmetria riflette ciò che le due fonti pubblicano. Per collegare un atto Camera al suo DDL Senato usa --number (il numero letto dalla timeline Camera) + --branch S: MAI per keyword, per non pescare un atto omonimo diverso.",
   emptyHint:
     "Nessun DDL trovato. Se cercavi il DDL Senato di un atto Camera, aggancialo PER NUMERO (--number <n> --branch S), non per keyword. Se usavi --keyword, prova il termine normativo o una radice più corta. Non dedurre l'iter: se non torna, non inventare fasi, date o esiti.",
   inputSchema,
@@ -81,6 +83,7 @@ export const billProgressTool: Tool<typeof inputSchema> = {
     "italianparliament bill-progress list --legislature 19 --limit 20",
     "italianparliament bill-progress list --number 1809 --branch S",
     "italianparliament bill-progress list --number 1809 --branch S --legislature 19",
+    "italianparliament bill-progress list --number 2617 --branch C --legislature 18",
     "italianparliament bill-progress list --ddl-uri http://dati.senato.it/ddl/25597",
     "italianparliament bill-progress list --legislature 19 --keyword autonomia --limit 20",
     "italianparliament bill-progress list --legislature 19 --date-from 2026-04-01 --date-to 2026-04-13",
@@ -98,6 +101,17 @@ export const billProgressTool: Tool<typeof inputSchema> = {
         : undefined;
     if (cameraUri) {
       return cameraIterTimeline(cameraUri, columns);
+    }
+
+    // --number con --branch C: l'utente vuole l'iter dell'atto Camera C.<num>,
+    // non il record di rimando lato Senato (osr:ramo="C" = una sola riga con lo
+    // stato corrente, senza timeline né date). Risolviamo l'URI dell'atto Camera
+    // (ac<leg>_<num>) e restituiamo la cronologia completa degli stati, come per
+    // --uri. Il ramo S resta sul repertorio Senato (stato corrente).
+    if (input.number && input.branch === "C") {
+      const leg = input.legislature ?? (await currentLegislature());
+      const cUri = `http://dati.camera.it/ocd/attocamera.rdf/ac${leg}_${input.number}`;
+      return cameraIterTimeline(cUri, columns);
     }
 
     // Se un URI Senato è passato via --uri, trattalo come ddlUri.

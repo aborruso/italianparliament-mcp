@@ -34,8 +34,10 @@ Verificato che il dato a monte contiene la timeline multi-fase **anche per la le
 
 Lo stesso tool `bill-progress` ha due rami con granularità diversa **per costruzione**, indipendente dalla legislatura:
 
-* **Camera** (`--uri <atto>`): timeline completa via `ocd:rif_statoIter` (una riga per stato).
-* **Senato** (default): l'entità `osr:Ddl` in SPARQL espone solo lo **stato corrente** (`osr:statoDdl` + `osr:dataStatoDdl`, `osr:fase`/`osr:numeroFase`), **una sola riga**, non una cronologia. La timeline dettagliata delle fasi del DDL Senato (con sedute ed esiti) vive nel **feed RSS** del DDL, non nello SPARQL — il tool la espone come `rss_url`. Vedi [Feed RSS dei DDL Senato](../senato/index.md).
+* **Camera**: timeline completa via `ocd:rif_statoIter` (una riga per stato), raggiungibile in due modi — con `--uri <atto>` o con `--number <n> --branch C` (che risolve `ac<leg>_<n>`).
+* **Senato** (`--branch S`, default): l'entità `osr:Ddl` in SPARQL espone solo lo **stato corrente** (`osr:statoDdl` + `osr:dataStatoDdl`, `osr:fase`/`osr:numeroFase`), **una sola riga**, non una cronologia. La timeline dettagliata delle fasi del DDL Senato (con sedute ed esiti) vive nel **feed RSS** del DDL, non nello SPARQL — il tool la espone come `rss_url`. Vedi [Feed RSS dei DDL Senato](../senato/index.md).
+
+Attenzione al `--branch` con `--number`: `--branch C` dà la **timeline** dell'atto Camera (molte righe), `--branch S` dà lo **stato corrente** del DDL Senato (una riga). Prima `--branch C` restituiva il record Senato di rimando (`osr:ramo="C"`, una riga senza date), fuorviante per chi si aspettava l'iter Camera (issue #41).
 
 Conseguenza pratica: un DDL Senato che "sembra meno dettagliato" di un atto Camera non è un buco della legislatura, ma questa differenza di modellazione tra i due grafi. Confrontare timeline con timeline (RSS lato Senato) o stato-corrente con stato-corrente.
 
