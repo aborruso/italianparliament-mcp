@@ -184,7 +184,9 @@ OFFSET ${input.offset}`;
     const rows = raw.map((r) => {
       const { s, rif_leg, birth_date, birth_place_uri, ...rest } = r;
       const bd = birth_date ?? "";
-      const birth_place = (birth_place_uri ?? "").split("/").pop() ?? "";
+      // Ultimo segmento dell'URI, ripulito da eventuale query/fragment (?…/#…)
+      // che altrimenti si attaccherebbe alla regione e la farebbe cadere a "".
+      const birth_place = ((birth_place_uri ?? "").split("/").pop() ?? "").split(/[?#]/, 1)[0] ?? "";
       return {
         uri: s ?? "",
         legislature_uri: rif_leg ?? "",
