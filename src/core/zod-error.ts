@@ -17,7 +17,7 @@ export function formatZodError(e: ZodError, flagStyle = false): string {
       if (i.code === "invalid_enum_value") {
         const received = JSON.stringify(i.received);
         const allowed = i.options.map((v) => JSON.stringify(v)).join(" | ");
-        return `${label(field)}: valore non valido ${received ?? "undefined"}. Ammessi: ${allowed}.`;
+        return `${label(field)}: valore non valido ${received}. Ammessi: ${allowed}.`;
       }
       return `${label(field)}: ${i.message}`;
     })

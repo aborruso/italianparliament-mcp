@@ -34,9 +34,7 @@ const inputSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
-    .describe(
-      "Data fine (YYYY-MM-DD): stesso significato di dateFrom/--date-from (data della seduta).",
-    ),
+    .describe("Data fine (YYYY-MM-DD): stesso significato di dateFrom (data della seduta)."),
   countOnly: z
     .boolean()
     .optional()
