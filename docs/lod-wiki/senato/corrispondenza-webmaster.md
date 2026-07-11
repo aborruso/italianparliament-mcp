@@ -35,3 +35,13 @@ Il dettaglio tecnico estratto da ogni scambio è documentato nella pagina wiki p
 | 2026-07-08 08:00 | Borruso → Webmaster | Segnala che gli emendamenti collegati a DDL recenti risultano sempre assenti (DL Sicurezza 2025, Piano Casa 2026: 0 emendamenti) mentre sono regolarmente presenti su provvedimenti anche vecchi (Cura Italia 2020: 3.827; DL dic. 2022: 119). Query di verifica allegata: nessun DDL collegato a un emendamento ha `osr:dataPresentazione` successiva al 9/8/2024. Chiede se è un aggiornamento sospeso temporaneamente o se gli emendamenti recenti sono pubblicati altrove. **Contenuto tecnico integrale → [Emendamenti — dataset fermo da agosto 2024](emendamenti-freschezza.md).** Issue collegata: [#38](https://github.com/ondata/italianparliament-mcp/issues/38). |
 
 *Prossimo passo: in attesa di risposta del Webmaster.*
+
+# Thread 3 — Votazioni d'Assemblea assenti nella finestra COVID 2020 (leg.18)
+
+**Stato: bozza pronta, non ancora inviata.**
+
+| Data | Da → A | Oggetto |
+|------|--------|---------|
+| — | Borruso → Webmaster | Segnala che le votazioni d'Assemblea sui principali decreti COVID (Cura Italia S.1766, Liquidità S.1829, decreto lockdown S.1811, Rilancio S.1874) risultano assenti dal grafo tra marzo e luglio 2020, pur essendo avvenute: aprile 2020 ha 1 sola votazione contro le 70-79 dei mesi adiacenti; la finestra 14-21 maggio 2020 (voto finale/fiducia sul decreto lockdown) ha solo la questione pregiudiziale, nessun voto finale. Query di verifica allegata (conteggio SPARQL sulla finestra 14-21/5/2020, risultato: 1). **Contenuto tecnico integrale → punto 1 di [note-gestori-lod/senato-webmaster.md](../../note-gestori-lod/senato-webmaster.md).** Issue collegata: [#36](https://github.com/ondata/italianparliament-mcp/issues/36). |
+
+*Prossimo passo: inviare la bozza in [note-gestori-lod/senato-webmaster-voti-covid.md](../../note-gestori-lod/senato-webmaster-voti-covid.md).*
