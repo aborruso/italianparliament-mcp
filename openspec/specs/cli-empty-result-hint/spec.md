@@ -6,7 +6,7 @@ Garantire che la CLI, su un risultato vuoto, comunichi lo stesso messaggio espli
 ## Requirements
 ### Requirement: La CLI comunica il messaggio esplicativo su risultato vuoto
 
-Quando l'esecuzione di un comando produce un risultato senza righe, la CLI SHALL scrivere su stderr un messaggio esplicativo, senza alterare l'output su stdout né l'exit code. La sorgente del messaggio SHALL seguire la precedenza: l'hint dinamico del risultato (`result.hint`) se presente, altrimenti l'`emptyHint` statico definito dal tool. Se nessuno dei due è disponibile, la CLI SHALL non scrivere alcun messaggio. Questo comportamento SHALL coincidere con quello del server MCP (`result.hint ?? emptyHint`).
+Quando l'esecuzione di un comando produce un risultato senza righe, la CLI SHALL scrivere su stderr un messaggio esplicativo, senza alterare l'output su stdout né l'exit code. La sorgente del messaggio SHALL seguire la precedenza: l'hint dinamico del risultato (`result.hint`) se presente, altrimenti l'`emptyHint` statico definito dal tool. Se nessuno dei due è disponibile, la CLI SHALL non scrivere alcun messaggio — a differenza del server MCP, la CLI non applica un messaggio di default. La **precedenza** tra hint dinamico ed `emptyHint` statico SHALL coincidere con quella del server MCP (`result.hint ?? emptyHint`, nullish); il default finale del path MCP (`?? DEFAULT_EMPTY`) resta specifico dell'MCP e fuori da questo requisito.
 
 #### Scenario: Risultato vuoto senza hint dinamico usa l'emptyHint statico
 

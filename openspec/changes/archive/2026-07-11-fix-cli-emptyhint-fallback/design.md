@@ -16,8 +16,8 @@ I tool del progetto espongono opzionalmente un `emptyHint?: string` statico (def
 
 ## Decisions
 
-- **Applicare il fallback in `runTool()`, non in `emit()`.** `runTool()` ha già il tool in mano; `emit()` no. Allargare la firma di `runTool` per includere `emptyHint?: string` e, dopo `tool.execute(parsed)`, se `result.rows.length === 0 && !result.hint && tool.emptyHint`, restituire `{ ...result, hint: tool.emptyHint }`. `emit()` resta invariato: già scrive `result.hint` su stderr quando il risultato è vuoto. Un solo punto di modifica, nessun tocco ai call site.
-- **Precedenza identica al server**: l'hint dinamico vince sull'`emptyHint` statico (`result.hint ?? emptyHint`), replicata dalla guardia `!result.hint`.
+- **Applicare il fallback in `runTool()`, non in `emit()`.** `runTool()` ha già il tool in mano; `emit()` no. Allargare la firma di `runTool` per includere `emptyHint?: string` e, dopo `tool.execute(parsed)`, se `result.rows.length === 0 && result.hint == null && tool.emptyHint`, restituire `{ ...result, hint: tool.emptyHint }`. `emit()` resta invariato: già scrive `result.hint` su stderr quando il risultato è vuoto. Un solo punto di modifica, nessun tocco ai call site.
+- **Precedenza identica al server**: l'hint dinamico vince sull'`emptyHint` statico (`result.hint ?? emptyHint`), replicata dalla guardia `result.hint == null` (nullish, non truthy `!result.hint`: così un hint dinamico stringa vuota non viene sovrascritto, restando fedele al `??`).
 - **Immutabilità del risultato**: si restituisce un nuovo oggetto (`{ ...result, hint }`) invece di mutare `result`, coerente con lo stile del codice.
 
 ## Risks / Trade-offs
