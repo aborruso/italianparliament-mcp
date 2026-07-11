@@ -7,7 +7,19 @@ import { ddlRssUrl } from "../core/html-url.js";
 import { currentLegislature } from "../core/current-legislature.js";
 import type { Tool } from "./types.js";
 
-const sparqlStringLiteral = (value: string): string => JSON.stringify(value);
+// Costruisce un letterale-stringa SPARQL valido escapando solo i caratteri che
+// la grammatica STRING_LITERAL2 vieta (\, ", newline, CR). Non usare
+// JSON.stringify: emette \uXXXX per i caratteri di controllo, sequenza che
+// alcuni parser SPARQL rifiutano nel corpo del letterale (o cercano un valore
+// diverso), rompendo il filtro keyword invece di fare il match atteso.
+const SPARQL_ESC: Record<string, string> = {
+  "\\": "\\\\",
+  '"': '\\"',
+  "\n": "\\n",
+  "\r": "\\r",
+};
+const sparqlStringLiteral = (value: string): string =>
+  `"${value.replace(/[\\"\n\r]/g, (c) => SPARQL_ESC[c] ?? c)}"`;
 
 const inputSchema = z.object({
   ddlUri: z
@@ -252,8 +264,12 @@ async function cameraIterTimeline(
     filters.push(`FILTER(STR(?date) <= "${opts.dateTo.replace(/-/g, "")}")`);
   }
 
+  // ?st NON è proiettato: entra in SELECT DISTINCT cambierebbe la chiave di
+  // dedup (ogni risorsa-stato è unica) e reintrodurrebbe righe visivamente
+  // duplicate quando due ?st hanno stessi titolo/date/stato. Serve solo come
+  // tie-breaker deterministico in ORDER BY per stabilizzare la paginazione.
   const query = `${OCD_PREFIXES}
-SELECT DISTINCT ?st ?titolo ?date ?stato WHERE {
+SELECT DISTINCT ?titolo ?date ?stato WHERE {
   <${uri}> ocd:rif_statoIter ?st .
   OPTIONAL { <${uri}> dc:title ?titolo }
   ?st dc:date ?date .
