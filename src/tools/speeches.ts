@@ -116,7 +116,7 @@ async function executeCamera(input: z.infer<typeof inputSchema>) {
   }
   // La data reale dell'intervento non è sull'intervento (ods:modified è il
   // timestamp di modifica del record). Vive sulla ocd:discussione che lo
-  // raggruppa: `?disc ocd:rif_intervento ?s ; dc:date ?d`, con dc:date plain
+  // raggruppa: `?disc ocd:rif_intervento ?s ; dc:date ?date`, con dc:date plain
   // "YYYYMMDD" (verificato: sia interventi d'Aula/stenografico sia di
   // commissione/bollettino, cardinalità 1 per intervento). Confronto
   // lessicografico (8 cifre fisse) forzato con STR(): su Virtuoso Camera i

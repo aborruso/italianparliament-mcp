@@ -18,10 +18,10 @@ describe("formatZodError", () => {
     expect(msg).toContain('"x"');
   });
 
-  it("flagStyle antepone -- al nome del campo (CLI), altrimenti nudo (MCP)", () => {
+  it("flagStyle rende il flag CLI reale (-- + kebab-case), MCP lascia il nome schema nudo", () => {
     const schema = z.object({ dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
     const err = zodErrorFrom(schema, { dateFrom: "pippo" });
-    expect(formatZodError(err, true)).toMatch(/^--dateFrom:/);
+    expect(formatZodError(err, true)).toMatch(/^--date-from:/);
     expect(formatZodError(err)).toMatch(/^dateFrom:/);
   });
 

@@ -6,13 +6,17 @@ import { ZodError } from "zod";
 // JSON lunga di default di Zod. flagStyle=true antepone "--" al nome del campo
 // (stile flag CLI); false lascia il nome del parametro nudo (MCP).
 export function formatZodError(e: ZodError, flagStyle = false): string {
-  const p = flagStyle ? "--" : "";
+  // flagStyle: rende il campo come il flag CLI reale — "--" + kebab-case
+  // (dateFrom -> --date-from, voteType -> --vote-type), così l'errore non
+  // suggerisce un flag camelCase inesistente. MCP usa il nome nudo dello schema.
+  const label = (field: string) =>
+    flagStyle ? `--${field.replace(/([A-Z])/g, "-$1").toLowerCase()}` : field;
   return e.issues
     .map((i) => {
       const field = i.path.join(".") || "input";
       return i.code === "invalid_enum_value"
-        ? `${p}${field}: valore non valido "${(i as { received?: string }).received ?? ""}". Ammessi: ${i.options.join(" | ")}.`
-        : `${p}${field}: ${i.message}`;
+        ? `${label(field)}: valore non valido "${(i as { received?: string }).received ?? ""}". Ammessi: ${i.options.join(" | ")}.`
+        : `${label(field)}: ${i.message}`;
     })
     .join("\n");
 }
