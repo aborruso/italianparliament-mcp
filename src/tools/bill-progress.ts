@@ -110,7 +110,7 @@ export const billProgressTool: Tool<typeof inputSchema> = {
   ],
   async execute(input) {
     const cameraEmptyHint =
-      "Nessuno stato iter Camera trovato per l'atto richiesto. Verifica il pairing legislature+number (o l'URI) e, se hai usato keyword/date/limit/offset, prova ad allargare i filtri o la paginazione. Non dedurre assenza di iter dal vuoto: senza evidenza non inventare stati, date o conclusioni.";
+      "Nessuno stato iter Camera trovato per l'atto richiesto. Verifica il pairing legislature+number (o l'URI) e, se hai usato dei filtri (keyword, intervallo di date) o la paginazione (limit/offset), prova ad allargarli. Non dedurre assenza di iter dal vuoto: senza evidenza non inventare stati, date o conclusioni.";
 
     // Routing per host: un URI Camera attiva il ramo "timeline iter".
     const isCamera = (u?: string): u is string =>
