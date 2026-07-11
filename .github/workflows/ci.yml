@@ -12,7 +12,7 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,5 +32,27 @@ jobs:
       - name: Type check
         run: NODE_OPTIONS="--max-old-space-size=4096" npx tsc --noEmit
 
-      - name: Test
-        run: npm test -- --run
+      - name: Deterministic tests (no live SPARQL)
+        run: npm test -- --run --exclude src/tools/tools.test.ts --exclude src/tools/sparql.test.ts
+
+  live_integration:
+    if: github.event_name == 'pull_request'
+    needs: ci
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Live integration tests (Camera/Senato endpoints)
+        run: npm test -- --run src/tools/sparql.test.ts src/tools/tools.test.ts
