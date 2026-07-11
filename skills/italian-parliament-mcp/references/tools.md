@@ -102,9 +102,9 @@ Iter di un disegno di legge, Camera o Senato (stesse colonne in entrambi i casi)
   - `ddlUri`: singolo DDL Senato
   - `keyword`: cerca nel titolo del DDL
   - `number`: numero dell'atto (es. `1809` → S.1809), da abbinare a `branch`. Se ometti `legislature`, usa la legislatura corrente (risolta dinamicamente). Lo stesso numero può esistere in entrambi i rami (C.1809 e S.1809).
-  - `branch`: ramo per `number`, `S` (Senato, default) o `C` (Camera)
+  - `branch`: ramo per `number`. `S` (default): repertorio Senato, **stato corrente** del DDL (una riga). `C`: risolve l'atto Camera `ac<leg>_<n>` e ne restituisce la **timeline completa** degli stati (una riga per stato, con date). L'asimmetria riflette la fonte: la Camera pubblica lo storico degli stati, il Senato solo lo stato corrente (la sua timeline vive nel feed RSS).
   - `dateFrom`/`dateTo`: intervallo data presentazione
-- **Camera** (`uri` = atto Camera `attocamera.rdf/...`): timeline completa di tutti gli stati attraversati, in ordine cronologico.
+- **Camera** — timeline completa di tutti gli stati attraversati, in ordine cronologico: con `uri` = atto Camera `attocamera.rdf/...`, oppure con `number` + `branch: C`.
 
 ### `bill-signatories`
 Firmatari di un DDL, **Camera o Senato** (il ramo è riconosciuto dall'URI): primo firmatario e cofirmatari con nome e link al profilo. Per gli atti di iniziativa governativa, il ruolo è "Governo (proponente)".

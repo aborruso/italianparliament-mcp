@@ -463,6 +463,27 @@ describe("Senato tools", () => {
     expect(first.phase).toBe("C.302");
   }, 30000);
 
+  it("bill-progress: --number + --branch C returns the Camera iter timeline (#41)", async () => {
+    // dl Covid Camera 2020: --number 2617 --branch C --legislature 18 deve dare
+    // la timeline dell'atto Camera (più stati datati), non il record di rimando
+    // lato Senato (una riga, phase C.2617, senza date).
+    const result = await billProgressTool.execute({
+      number: "2617",
+      branch: "C",
+      legislature: 18,
+      limit: 100,
+      offset: 0,
+    });
+    expect(result.rows.length).toBeGreaterThanOrEqual(2);
+    expect(result.rows[0].ddl_uri).toBe(
+      "http://dati.camera.it/ocd/attocamera.rdf/ac18_2617",
+    );
+    expect(result.rows[0].phase).toBe("C.2617");
+    expect(result.rows[0].status_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // deve contenere lo stato finale "Legge"
+    expect(result.rows.some((r) => /Legge/.test(r.status))).toBe(true);
+  }, 30000);
+
   it("bill-signatories: returns signatories for a Senato DDL", async () => {
     const result = await billSignatoriesTool.execute({
       billUri: "http://dati.senato.it/ddl/25597",
