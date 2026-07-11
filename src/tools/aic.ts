@@ -30,7 +30,7 @@ const inputSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Filtra per tipo di atto (match parziale case-insensitive su dc:type e, in fallback, sul label). Es. 'immediata' per interrogazioni a risposta immediata/question time (dc:type non le distingue dalle orali per leg. 19: il match scatta sul label), 'scritta', 'commissione', 'mozione', 'interpellanza', 'odg'",
+      "Filtra per tipo di atto (match parziale case-insensitive su dc:type e, in fallback, sul label). Es. 'immediata' per interrogazioni a risposta immediata/question time (dc:type non le distingue dalle orali per leg. 19: il match scatta sul label), 'scritta', 'commissione', 'mozione', 'interpellanza', 'odg'. Per la SEDE del question time il label è regolare, quindi filtrabile qui: 'immediata in assemblea' = question time in Aula, 'immediata in commissione' = question time in commissione (nessun campo/flag dedicato necessario).",
     ),
   dateFrom: z
     .string()
@@ -76,6 +76,7 @@ export const aicTool: Tool<typeof inputSchema> = {
     "italianparliament aic list --legislature 19 --date-from 2026-01-01 --limit 50",
     "italianparliament aic list --legislature 19 --date-from 2026-01-01 --date-to 2026-03-31 --format jsonl",
     "italianparliament aic list --legislature 19 --type immediata --limit 20",
+    "italianparliament aic list --legislature 19 --type \"immediata in assemblea\" --limit 20",
   ],
   async execute(input) {
     let signatoryPattern: string;
