@@ -11,6 +11,10 @@ Endpoint SPARQL: `https://dati.camera.it/sparql`. Ontologia OCD (namespace `http
 * [Iter di un atto — timeline degli stati](iter-statoIter.md) - la cronologia dell'iter è una timeline via `ocd:rif_statoIter` (uno stato per fase, `dc:date`+`dc:title`); copertura alla pari tra legislature (18 = 19). Il ramo Senato dà per design solo lo stato corrente (timeline nel feed RSS), asimmetria di ramo non di legislatura.
 * [Firmatari di decreti-legge e atti governativi](firmatari-atti-governativi.md) - sugli atti del Governo `ocd:primo_firmatario` punta a un blank node "membro di governo", non a un deputato: il nome del ministro è via `ocd:rif_persona`, il dicastero in `ocd:ruolo`. Senza seguirli il nome torna vuoto.
 
+# Fonti non-LOD (HTML/PDF)
+
+* [getDocumento.ashx — router delle fonti non-LOD](getdocumento-router.md) - il servizio `CommonServices/getDocumento.ashx` serve, cambiando `sezione`/`tipoDoc`, testi dei ddl, schede-attività dei deputati e Bollettini delle Giunte e Commissioni. Mappa delle facce, copertura vs LOD e priorità di integrazione (scraping, non dato strutturato).
+
 # Assenti
 
-* [Assenti verificati](assenti.md) - dati che NON esistono nel LOD OCD (emendamenti, …).
+* [Assenti verificati](assenti.md) - dati che NON esistono nel LOD OCD (emendamenti, …); include la mappa dell'app `apps/emendamenti` (liste, vista per-seduta con esito, endpoint XML indice).
