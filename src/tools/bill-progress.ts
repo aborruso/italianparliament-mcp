@@ -3,6 +3,7 @@ import { snQuery, cdQuery } from "../core/client.js";
 import { OSR_PREFIXES, OCD_PREFIXES } from "../core/prefixes.js";
 import { flattenBindings } from "../core/flatten.js";
 import { decodeHtml } from "../core/decode-html.js";
+import { htmlEntityKeywordVariants } from "../core/html-entity-variants.js";
 import { ddlRssUrl } from "../core/html-url.js";
 import { currentLegislature } from "../core/current-legislature.js";
 import type { Tool } from "./types.js";
@@ -162,7 +163,9 @@ export const billProgressTool: Tool<typeof inputSchema> = {
     }
     if (input.keyword) {
       filters.push(
-        `FILTER(CONTAINS(LCASE(STR(?titolo)), LCASE(${sparqlStringLiteral(input.keyword)})))`,
+        `FILTER(${htmlEntityKeywordVariants(input.keyword)
+          .map((variant) => `CONTAINS(LCASE(STR(?titolo)), LCASE(${sparqlStringLiteral(variant)}))`)
+          .join(" || ")})`,
       );
     }
     if (input.number) {
@@ -254,7 +257,9 @@ async function cameraIterTimeline(
   const filters: string[] = [];
   if (opts.keyword) {
     filters.push(
-      `FILTER(BOUND(?titolo) && CONTAINS(LCASE(STR(?titolo)), LCASE(${sparqlStringLiteral(opts.keyword)})))`,
+      `FILTER(BOUND(?titolo) && (${htmlEntityKeywordVariants(opts.keyword)
+        .map((variant) => `CONTAINS(LCASE(STR(?titolo)), LCASE(${sparqlStringLiteral(variant)}))`)
+        .join(" || ")}))`,
     );
   }
   if (opts.dateFrom) {

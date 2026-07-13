@@ -3,6 +3,7 @@ import { cdQuery } from "../core/client.js";
 import { flattenBindings } from "../core/flatten.js";
 import { OCD_PREFIXES } from "../core/prefixes.js";
 import { decodeHtml } from "../core/decode-html.js";
+import { htmlEntityKeywordVariants } from "../core/html-entity-variants.js";
 import { actHtmlUrl } from "../core/html-url.js";
 import type { Tool } from "./types.js";
 
@@ -85,7 +86,12 @@ export const billsTool: Tool<typeof inputSchema> = {
         : "";
     const keywordFilter =
       input.keyword !== undefined
-        ? `FILTER(CONTAINS(LCASE(STR(?label)), LCASE("${sparqlEscape(input.keyword)}")) || CONTAINS(LCASE(STR(?title)), LCASE("${sparqlEscape(input.keyword)}")))`
+        ? `FILTER(${htmlEntityKeywordVariants(input.keyword)
+            .map(
+              (variant) =>
+                `(CONTAINS(LCASE(STR(?label)), LCASE("${sparqlEscape(variant)}")) || CONTAINS(LCASE(STR(?title)), LCASE("${sparqlEscape(variant)}")))`,
+            )
+            .join(" || ")})`
         : "";
     const typeFilter =
       input.type !== undefined
