@@ -113,6 +113,20 @@ describe("Camera tools", () => {
     expect(result.rows[0]).toHaveProperty("type");
   }, 30000);
 
+  it("bills: keyword matches decoded HTML entities in Camera titles", async () => {
+    const result = await billsTool.execute({
+      legislature: 19,
+      keyword: "criminalità",
+      limit: 10,
+      offset: 0,
+    });
+    expect(
+      result.rows.some(
+        (r) => r.uri === "http://dati.camera.it/ocd/attocamera.rdf/ac19_2696",
+      ),
+    ).toBe(true);
+  }, 30000);
+
   it("votes: returns votes for legislature 19", async () => {
     const result = await votesTool.execute({ legislature: 19, limit: 3, offset: 0 });
     expect(result.rows.length).toBe(3);
@@ -552,6 +566,21 @@ describe("Senato tools", () => {
     expect(first).toHaveProperty("status");
     expect(first.status_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(first.phase).toBe("C.302");
+  }, 30000);
+
+  it("bill-progress: Camera keyword matches decoded HTML entities in atto titles", async () => {
+    const result = await billProgressTool.execute({
+      uri: "http://dati.camera.it/ocd/attocamera.rdf/ac19_2696",
+      keyword: "criminalità",
+      limit: 10,
+      offset: 0,
+    });
+    expect(result.rows.length).toBeGreaterThan(0);
+    expect(
+      result.rows.every(
+        (r) => r.ddl_uri === "http://dati.camera.it/ocd/attocamera.rdf/ac19_2696",
+      ),
+    ).toBe(true);
   }, 30000);
 
   it("bill-progress: --number + --branch C returns the Camera iter timeline (#41)", async () => {
