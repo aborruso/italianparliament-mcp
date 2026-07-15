@@ -96,8 +96,11 @@ export function buildSenatoVotesEmptyHint(
 
 /**
  * Sonda le date: conta sedute d'Assemblea e votazioni nell'intervallo. Eseguita
- * SOLO sul path vuoto con almeno un vincolo di data (2 query leggere, range
- * filter performante su Virtuoso). Usa `effectiveLeg` (derivata dal DDL se dato).
+ * SOLO sul path vuoto con almeno un vincolo di data. Una sola query (COUNT
+ * sedute + COUNT votazioni via OPTIONAL sulla stessa seduta): il throttle Senato
+ * spazia le richieste di ~2s, quindi due query separate raddoppierebbero la
+ * latenza del path vuoto per nulla. Range filter performante su Virtuoso; usa
+ * `effectiveLeg` (derivata dal DDL se dato).
  */
 async function probeSenatoDates(
   effectiveLeg: number,
@@ -108,20 +111,17 @@ async function probeSenatoDates(
   if (dateFrom) bounds.push(`?d >= "${dateFrom}"^^xsd:date`);
   if (dateTo) bounds.push(`?d <= "${dateTo}"^^xsd:date`);
   const filter = bounds.length ? `FILTER(${bounds.join(" && ")})` : "";
-  const sedQ = `${OSR_PREFIXES}
-SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE {
+  const q = `${OSR_PREFIXES}
+SELECT (COUNT(DISTINCT ?s) AS ?sedute) (COUNT(DISTINCT ?v) AS ?votazioni) WHERE {
   ?s a osr:SedutaAssemblea ; osr:legislatura ${effectiveLeg} ; osr:dataSeduta ?d .
   ${filter}
+  OPTIONAL { ?v a osr:Votazione ; osr:seduta ?s }
 }`;
-  const votQ = `${OSR_PREFIXES}
-SELECT (COUNT(DISTINCT ?v) AS ?n) WHERE {
-  ?v a osr:Votazione ; osr:legislatura ${effectiveLeg} ; osr:seduta ?s .
-  ?s osr:dataSeduta ?d .
-  ${filter}
-}`;
-  const sedute = Number(flattenBindings(await snQuery(sedQ))[0]?.n ?? "0");
-  const votazioni = Number(flattenBindings(await snQuery(votQ))[0]?.n ?? "0");
-  return { sedute, votazioni };
+  const r = flattenBindings(await snQuery(q))[0];
+  return {
+    sedute: Number(r?.sedute ?? "0"),
+    votazioni: Number(r?.votazioni ?? "0"),
+  };
 }
 
 const inputSchema = z.object({
@@ -641,9 +641,16 @@ SELECT ?ddl ?f WHERE {
       // prima pagina: con offset>0 il vuoto può essere solo "oltre l'ultima
       // pagina" (votazioni>0), e la sonda affermerebbe il falso ("N votazioni ma
       // nessuna matcha i filtri"). In quel caso restano i frammenti statici.
+      // La sonda è diagnostica accessoria: se fallisce (es. 403/timeout Senato)
+      // NON deve trasformare un risultato vuoto legittimo in un errore — degrada
+      // all'hint statico.
       const probe =
         (input.dateFrom || input.dateTo) && !input.ddlUri && input.offset === 0
-          ? await probeSenatoDates(effectiveLeg, input.dateFrom, input.dateTo)
+          ? await probeSenatoDates(
+              effectiveLeg,
+              input.dateFrom,
+              input.dateTo,
+            ).catch(() => undefined)
           : undefined;
       return {
         rows,
