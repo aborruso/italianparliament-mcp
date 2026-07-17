@@ -178,8 +178,12 @@ export const cameraAmendmentsTool: Tool<typeof inputSchema> = {
       // emendamenti esistono ancora alla fonte. L'indice strutturato per-atto
       // (apps/emendamenti/ostr/{leg}) li contiene comunque: fallback prima di
       // concludere "nessun emendamento".
+      // Niente .catch(() => "") qui: swallowerebbe un fallimento di rete/HTTP
+      // (fetchHtml lancia su !res.ok) come "nessun emendamento", lo stesso
+      // problema di vuoto ingannevole appena escluso sopra per la scheda
+      // principale. Se il fetch fallisce, l'errore propaga con lo status HTTP.
       const ostrUrl = `${EME_BASE}ostr/${leg}?attoportante=leg.${leg}.eme.ac.${num}`;
-      const ostr = await fetchHtml(ostrUrl).catch(() => "");
+      const ostr = await fetchHtml(ostrUrl);
       listUrls = schedaListUrls(ostr);
     }
 
