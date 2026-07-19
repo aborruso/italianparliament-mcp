@@ -1,5 +1,9 @@
 # LOG
 
+## 2026-07-19
+
+- **v0.26.1** — release patch. Fix `votes list` (Camera): `label`/`title`/`description` arrivavano con entità HTML doppiamente codificate (es. `all&amp;#39;emergenza` invece di `all'emergenza`), perché `votes.ts` era l'unico tool a non applicare l'helper `decodeHtml` già esistente e usato da `bills.ts`, `bill-progress.ts` e altri. Emerso dal report news-agent `2026-07-19_08-11.md` (agente news-driven-cli-gap-analyzer): 6 notizie testate a spettro temporale (oggi, 2025/leg.19, 2020/leg.18), copertura confermata solida su voti/iter/interventi/profili, unico gap reale questo bug. PR #70, mergiata via squash. 43 tool invariati, 172/174 test verdi (2 fallimenti `senato-votes` per 403 dell'endpoint Senato, non collegati).
+
 ## 2026-07-17
 
 - **v0.26.0** — release minor. `senato-votes` guadagna la colonna `ddl_title` (titolo del DDL/documento collegato, utile sui voti con label generico) e `--keyword` ora cerca anche in `osr:titoloBreve`; `--ddl-uri` include le fiducie anche su seduta diversa dal voto forte; `camera-amendments` copre gli emendamenti sugli atti storici (fallback indice ostr) senza più mascherare i fallimenti di fetch come "nessun emendamento". PR #69, review Greptile+Copilot triagata (2 fix reali, 1 falso positivo, 1 residuo documentato deliberatamente non corretto). 43 tool invariati, dettaglio nelle voci sotto.
