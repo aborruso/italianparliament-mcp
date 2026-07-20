@@ -404,7 +404,14 @@ async function inheritBillFromSession(rows: Record<string, string>[]): Promise<v
       !r.aic_code,
   );
   if (!needing.length) return;
-  const sessions = [...new Set(needing.map((r) => r.session_uri))];
+  // Il numero d'atto si ripete tra legislature ("100" esiste in 18 e in 19):
+  // ogni cache va chiavata anche sulla legislatura, altrimenti una richiesta a
+  // cavallo di due legislature attribuisce a un voto della 18 l'URI della 19.
+  const legBySession = new Map<string, string>();
+  for (const r of needing) {
+    if (!legBySession.has(r.session_uri)) legBySession.set(r.session_uri, r.legislature_uri);
+  }
+  const sessions = [...legBySession.keys()];
   const values = sessions.map((s) => `<${s}>`).join(" ");
   const q = `${OCD_PREFIXES}
 SELECT DISTINCT ?sed ?descr ?atto WHERE {
@@ -417,6 +424,7 @@ SELECT DISTINCT ?sed ?descr ?atto WHERE {
   // sia da quelli citati nel testo delle altre votazioni della stessa seduta.
   const basesBySession = new Map<string, Set<string>>();
   const uriByBase = new Map<string, string>();
+  const key = (legUri: string, base: string) => `${legUri}|${base}`;
   for (const rr of flattenBindings(await cdQuery(q))) {
     if (!rr.sed) continue;
     const set = basesBySession.get(rr.sed) ?? new Set<string>();
@@ -424,7 +432,8 @@ SELECT DISTINCT ?sed ?descr ?atto WHERE {
       const n = rr.atto.match(/_(\d+)$/)?.[1];
       if (n) {
         set.add(n);
-        if (!uriByBase.has(n)) uriByBase.set(n, rr.atto);
+        const k = key(legBySession.get(rr.sed) ?? "", n);
+        if (!uriByBase.has(k)) uriByBase.set(k, rr.atto);
       }
     }
     const cited = billBaseNumber(extractBillNumber(decodeHtml(rr.descr ?? "")));
@@ -441,22 +450,24 @@ SELECT DISTINCT ?sed ?descr ?atto WHERE {
   const byLeg = new Map<string, Set<string>>();
   for (const r of needing) {
     const base = baseBySession.get(r.session_uri);
-    if (!base || uriByBase.has(base)) continue;
+    if (!base || uriByBase.has(key(r.legislature_uri, base))) continue;
     const g = byLeg.get(r.legislature_uri) ?? new Set<string>();
     g.add(base);
     byLeg.set(r.legislature_uri, g);
   }
   for (const [legUri, bases] of byLeg) {
     for (const [id, uri] of await resolveActUris(legUri, [...bases])) {
-      if (!uriByBase.has(id)) uriByBase.set(id, uri);
+      const k = key(legUri, id);
+      if (!uriByBase.has(k)) uriByBase.set(k, uri);
     }
   }
   for (const r of needing) {
     const base = baseBySession.get(r.session_uri);
-    const uri = base ? uriByBase.get(base) : undefined;
+    if (!base) continue;
+    const uri = uriByBase.get(key(r.legislature_uri, base));
     if (!uri) continue;
     r.bill_uri = uri;
-    r.bill_number = base!;
+    r.bill_number = base;
   }
 }
 

@@ -182,6 +182,25 @@ describe("Camera tools", () => {
     expect(art1?.bill_uri).toBe("http://dati.camera.it/ocd/attocamera.rdf/ac19_1049");
   }, 30000);
 
+  it("votes: su finestra a cavallo di due legislature l'atto resta nella legislatura giusta", async () => {
+    // Lug-dic 2022: la finestra contiene sia gli ultimi voti della 18 sia i
+    // primi della 19. I numeri d'atto si ripetono tra legislature ("100" esiste
+    // in entrambe): se la risoluzione numero → URI non è chiavata anche sulla
+    // legislatura, un voto della 18 si ritrova agganciato a un atto ac19_*.
+    const result = await votesTool.execute({
+      dateFrom: "2022-07-01",
+      dateTo: "2022-12-31",
+      limit: 600,
+      offset: 0,
+    });
+    const linked = result.rows.filter((r) => r.bill_uri);
+    expect(new Set(linked.map((r) => r.legislature_uri)).size).toBe(2);
+    for (const r of linked) {
+      const leg = r.legislature_uri.split("_").pop();
+      expect(r.bill_uri).toContain(`/ac${leg}_`);
+    }
+  }, 60000);
+
   it("votes: mozioni e risoluzioni restano senza atto anche in seduta monotematica", async () => {
     // 30/6/2026: solo RIS/MOZ. Sono AIC a sé stanti, ereditare l'atto della
     // seduta le legherebbe a un provvedimento che non le riguarda.
