@@ -483,6 +483,23 @@ describe("Camera tools", () => {
     expect(result.rows[0]).toHaveProperty("initiative");
   }, 30000);
 
+  it("bill: ripulisce label e title da entità HTML, tag e suffisso ^^xsd (legge IA)", async () => {
+    // ac19_2316: il literal arriva dal grafo con &quot;/&lt;em&gt;/&nbsp; e con
+    // "^^http://www.w3.org/2001/XMLSchema#string" incollato dentro al valore.
+    // `bills list` lo ripuliva già, `bill show` no.
+    const result = await billTool.execute({
+      uri: "http://dati.camera.it/ocd/attocamera.rdf/ac19_2316",
+    });
+    const r = result.rows[0];
+    for (const field of ["label", "title", "description"] as const) {
+      expect(r[field]).not.toContain("^^");
+      expect(r[field]).not.toMatch(/&(?:quot|lt|gt|amp|nbsp|#\d+);/);
+      expect(r[field]).not.toMatch(/<[^>]+>/);
+    }
+    expect(r.label).toContain('"Disposizioni e deleghe al Governo in materia di intelligenza artificiale"');
+    expect(r.label).toContain("(approvato dal Senato)");
+  }, 30000);
+
   it("search: finds Meloni in camera", async () => {
     const result = await searchTool.execute({
       name: "meloni",
