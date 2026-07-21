@@ -112,7 +112,7 @@ Nota voti Camera: se `--keyword`/numero non trova il **voto finale** o la **fidu
 Regole d'oro:
 
 - **Usa il termine normativo, non quello giornalistico.** Es. `elezione` (non `elettorale`), `disabilità`/`portatori di handicap`, `sostegno` (non `fuorisede`/`fuori sede`). In dubbio, prova entrambi.
-- **Prova più sinonimi e radici di parola** prima di concludere. Preferisci la **radice** breve che copre più forme: `elett` → elettorale/elettori/elezione; `ambient` → ambiente/ambientale. Se il tool matcha a confini di parola (es. `aic --keyword`), usa più keyword separate.
+- **Prova più sinonimi e radici di parola** prima di concludere. Preferisci la **radice** breve che copre più forme: `elett` → elettorale/elettori, `elez` → elezione/elezioni (occhio: `elezioni` al plurale non matcha un titolo con `elezione` al singolare — la radice sì); `ambient` → ambiente/ambientale. Se il tool matcha a confini di parola (es. `aic --keyword`), usa più keyword separate.
 - **Vuoto ≠ assente.** Se non trovi nulla, riformula con un sinonimo o una radice prima di dire all'utente che il dato non c'è. Solo dopo 2-3 varianti fallite l'assenza è credibile.
 - **Sindacato ispettivo (Senato) non è ricercabile per argomento**: `sindacato-ispettivo --keyword` non filtra sull'oggetto perché il LOD Senato non espone l'oggetto/testo dell'atto (solo tipo, numero, data, firmatari). Il testo vive solo nella pagina HTML esterna. Non promettere ricerche tematiche su questo tool.
 
